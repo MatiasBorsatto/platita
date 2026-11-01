@@ -14,18 +14,18 @@ const editando = !!props.gasto
 
 const hoy = hoyLocal()
 const g = props.gasto
-const pagadorId = ref(g?.pagadorId ?? props.usuarioId ?? props.miembros[0]?.usuarioId ?? '')
-const monto = ref(g ? g.monto.replace('.', ',') : '')
+const monto = ref(g ? String(g.monto).replace('.', ',') : '')
 const fecha = ref(g?.fecha ?? hoy)
 const descripcion = ref(g?.descripcion ?? '')
 const categoriaId = ref(g?.categoriaId ?? '')
-const personalizados = ref({}) // { [usuarioId]: texto }
-const categoriasPart = ref(Object.fromEntries(props.miembros.map((m) => [m.usuarioId, '']))) // { [usuarioId]: categoriaId | '' }
+const personalizados = ref({}) // { [usuarioId]: texto } - usado como "Aportó"
+const aportes = ref({}) // { [usuarioId]: texto } - aporte real
+const categoriasPart = ref(Object.fromEntries(props.miembros.map((m) => [m.usuarioId, ''])))
 
 // En edición: si el reparto es el de partes iguales se abre en ese modo; si no, personalizado.
 function esPartesIguales(gasto) {
   const n = BigInt(props.miembros.length)
-  if (n === 0n || gasto.participaciones.length !== props.miembros.length) return false
+  if (n === 0n || !gasto.participaciones || gasto.participaciones.length !== props.miembros.length) return false
   const c = aCentavos(gasto.monto)
   return props.miembros.every((m, i) => {
     const p = gasto.participaciones.find((x) => x.usuarioId === m.usuarioId)
@@ -34,15 +34,27 @@ function esPartesIguales(gasto) {
 }
 const modo = ref(g && !esPartesIguales(g) ? 'personalizado' : 'igual')
 if (g) {
-  for (const p of g.participaciones) {
+  for (const p of g.participaciones || []) {
     if (p.usuarioId in categoriasPart.value) {
-      // La categoría igual a la del gasto se muestra como "Heredar del gasto".
       categoriasPart.value[p.usuarioId] = p.categoriaId && p.categoriaId !== g.categoriaId ? p.categoriaId : ''
     }
     if (modo.value === 'personalizado') personalizados.value[p.usuarioId] = p.monto.replace('.', ',')
   }
   if (modo.value === 'personalizado') {
     for (const m of props.miembros) personalizados.value[m.usuarioId] ??= ''
+  }
+  // Cargar aportes existentes si hay
+  for (const a of g.aportes || []) {
+    if (a.usuarioId in aportes.value || props.miembros.find((m) => m.usuarioId === a.usuarioId)) {
+      aportes.value[a.usuarioId] = String(a.monto).replace('.', ',')
+    }
+  }
+}
+
+// Inicializar aportes: precargar con parte teórica para el usuario actual, resto 0
+if (!g) {
+  for (const m of props.miembros) {
+    aportes.value[m.usuarioId] = m.usuarioId === props.usuarioId ? '' : '0,00'
   }
 }
 
@@ -79,7 +91,7 @@ const reparto = computed(() => {
 
 const sumaCentavos = computed(() => reparto.value.reduce((acc, r) => acc + (r.monto ? aCentavos(r.monto) : 0n), 0n))
 const sumaCoincide = computed(() => total.value !== null && sumaCentavos.value === aCentavos(total.value))
-const puedeEnviar = computed(() => sumaCoincide.value && !!pagadorId.value)
+const puedeEnviar = computed(() => sumaCoincide.value)
 
 function enviar() {
   if (!total.value) {
@@ -95,8 +107,20 @@ function enviar() {
     return
   }
   error.value = ''
+  // Construir aportes
+  const aportesLista = []
+  for (const m of props.miembros) {
+    const val = aportes.value[m.usuarioId]
+    const norm = val ? normalizarMonto(val) : null
+    if (norm) {
+      aportesLista.push({ usuarioId: m.usuarioId, monto: norm })
+    } else if (m.usuarioId === props.usuarioId && !editando) {
+      // Si no se completó, usar su parte teórica
+      const parte = reparto.value.find((r) => r.usuarioId === m.usuarioId)?.monto
+      if (parte) aportesLista.push({ usuarioId: m.usuarioId, monto: parte })
+    }
+  }
   emit('guardar', {
-    pagadorId: pagadorId.value,
     monto: total.value,
     fecha: fecha.value,
     descripcion: descripcion.value.trim() || null,
@@ -105,7 +129,8 @@ function enviar() {
       usuarioId: r.usuarioId,
       monto: r.monto,
       ...(categoriasPart.value[r.usuarioId] ? { categoriaId: categoriasPart.value[r.usuarioId] } : {})
-    }))
+    })),
+    aportes: aportesLista
   })
 }
 </script>
@@ -119,11 +144,7 @@ function enviar() {
     <label>Fecha
       <input v-model="fecha" name="fecha" type="date" />
     </label>
-    <label>Pagó
-      <select v-model="pagadorId" name="pagadorId">
-        <option v-for="m in miembros" :key="m.usuarioId" :value="m.usuarioId">{{ m.nombre }}</option>
-      </select>
-    </label>
+    <!-- Pagador se maneja por aportes reales -->
     <label>Categoría
       <select v-model="categoriaId" name="categoriaId">
         <option value="">Sin categoría</option>
@@ -140,15 +161,26 @@ function enviar() {
       </select>
     </label>
 
+    <div class="cabecera-reparto">
+      <span>Integrante</span>
+      <span>Le corresponde</span>
+      <span>Aportó</span>
+      <span>Categoría</span>
+    </div>
     <ul class="reparto">
       <li v-for="m in miembros" :key="m.usuarioId">
         <span class="nombre">{{ m.nombre }}</span>
-        <span v-if="modo === 'igual'" data-reparto>{{ igual[m.usuarioId] ? formatearMonto(igual[m.usuarioId]) : '—' }}</span>
+        <span v-if="modo === 'igual'" class="corresponde" data-reparto>{{ igual[m.usuarioId] ? formatearMonto(igual[m.usuarioId]) : '—' }}</span>
         <CampoMonto
           v-else
           v-model="personalizados[m.usuarioId]"
           :name="`monto-${m.usuarioId}`"
-          :aria-label="`Monto de ${m.nombre}`"
+          :aria-label="`Le corresponde a ${m.nombre}`"
+        />
+        <CampoMonto
+          v-model="aportes[m.usuarioId]"
+          :name="`aporte-${m.usuarioId}`"
+          :aria-label="`Aportó ${m.nombre}`"
         />
         <select v-model="categoriasPart[m.usuarioId]" :name="`categoria-${m.usuarioId}`" :aria-label="`Categoría de ${m.nombre}`">
           <option value="">Heredar del gasto</option>
@@ -175,10 +207,11 @@ function enviar() {
   background: var(--superficie); color: var(--texto); border: 1px solid var(--borde); border-radius: 8px;
 }
 .error-form { grid-column: 1 / -1; padding: 10px; border-radius: 8px; background: var(--error-fondo); color: var(--error); }
+.cabecera-reparto { grid-column: 1 / -1; display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 8px; color: var(--texto-suave); font-size: 0.9rem; }
 .reparto { grid-column: 1 / -1; list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-.reparto li { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.reparto li { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; align-items: center; gap: 8px; }
 .reparto select { max-width: 100%; padding: 8px; background: var(--superficie); color: var(--texto); border: 1px solid var(--borde); border-radius: 8px; }
-.reparto input { width: 140px; margin: 0; }
+.reparto input { width: 100%; margin: 0; }\n  .corresponde { color: var(--texto-suave); }\n  @media (max-width: 900px) {\n    .cabecera-reparto { display: none; }\n    .reparto li { grid-template-columns: 1fr; }\n  }
 .nombre { overflow-wrap: anywhere; min-width: 0; }
 .aviso { grid-column: 1 / -1; margin: 0; color: var(--error); }
 .acciones { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }

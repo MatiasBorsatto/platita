@@ -14,6 +14,10 @@ router.get('/', async (req, res) => {
   res.json({ items, total, page: filtros.page, limit: filtros.limit });
 });
 
+router.get('/dinero-actual', async (req, res) => {
+  res.json(await service.dineroActual(req.usuario.id));
+});
+
 router.post('/', async (req, res) => {
   res.status(201).json(await service.crearMovimiento(req.usuario.id, validarCrear(req.body)));
 });

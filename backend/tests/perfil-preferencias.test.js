@@ -12,6 +12,14 @@ let agent;
 let usuario;
 let espia;
 
+// El aviso por email es deliberadamente asíncrono (no bloquea la petición),
+// así que esperamos a que el espía reciba la llamada.
+async function esperarEmail(cantidad) {
+  for (let i = 0; i < 100 && espia.mock.calls.length < cantidad; i += 1) {
+    await new Promise((r) => setTimeout(r, 10));
+  }
+}
+
 beforeAll(async () => {
   agent = request.agent(app);
   await agent.post('/api/auth/registro').send({ nombre: 'Pía', email: correo, password });
@@ -65,6 +73,7 @@ test('la preferencia controla el email de alerta de presupuesto', async () => {
   expect(espia).not.toHaveBeenCalled();
   await agent.patch('/api/usuario/perfil').send({ preferenciasEmail: true });
   await registrarAlertaPresupuesto(usuario.id, pres, '100', 'Superaste el límite');
+  await esperarEmail(1);
   expect(espia).toHaveBeenCalledTimes(1);
   expect(espia.mock.calls[0][0].para).toBe(correo);
 });

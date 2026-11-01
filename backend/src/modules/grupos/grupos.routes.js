@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { autenticar } = require('../../middlewares/autenticar');
 const { grupoAccesible } = require('../../middlewares/grupoAccesible');
-const { validarUuid, validarGastoCompartido, validarEdicionGastoCompartido, validarFiltros } = require('../movimientos/movimientos.validation');
+const { validarUuid, validarGastoCompartido, validarEdicionGastoCompartido, validarAporte, validarFiltros } = require('../movimientos/movimientos.validation');
 const { ErrorValidacion, ErrorNoEncontrado } = require('../../utils/errores');
 const service = require('./grupos.service');
 const invitaciones = require('./invitaciones.service');
@@ -93,6 +93,21 @@ router.patch('/:id/gastos/:movimientoId', grupoAccesible(), async (req, res) => 
 router.delete('/:id/gastos/:movimientoId', grupoAccesible(), async (req, res) => {
   const movimientoId = idGasto(req.params.movimientoId);
   await compartidos.eliminarGastoCompartido(req.usuario.id, req.grupoId, movimientoId);
+  res.status(204).end();
+});
+
+router.post('/:id/gastos/:movimientoId/aportes', grupoAccesible(), async (req, res) => {
+  const movimientoId = idGasto(req.params.movimientoId);
+  const datos = validarAporte(req.body);
+  res
+    .status(201)
+    .json(await compartidos.registrarAporte(req.usuario.id, req.grupoId, movimientoId, datos));
+});
+
+router.delete('/:id/gastos/:movimientoId/aportes/:aporteId', grupoAccesible(), async (req, res) => {
+  const movimientoId = idGasto(req.params.movimientoId);
+  const aporteId = validarUuid(req.params.aporteId, 'aporteId');
+  await compartidos.eliminarAporte(req.usuario.id, req.grupoId, movimientoId, aporteId);
   res.status(204).end();
 });
 

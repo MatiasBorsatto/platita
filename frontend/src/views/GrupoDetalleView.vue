@@ -10,9 +10,11 @@ import ListaGastosCompartidos from '../components/ListaGastosCompartidos.vue'
 import {
   obtenerGrupo, listarSaldos, listarPagos, registrarPago, crearGastoCompartido,
   listarGastosCompartidos, editarGastoCompartido, eliminarGastoCompartido,
+  registrarAporte, eliminarAporte,
   regenerarCodigo, quitarMiembro, cambiarRol, salirDeGrupo, invitar
 } from '../services/grupos.js'
 import { listarCategorias } from '../services/movimientos.js'
+import { normalizarMonto } from '../utils/formato.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -94,6 +96,30 @@ const eliminarGasto = async (g) => {
     await refrescar()
     aviso.value = 'Gasto compartido eliminado.'
   }, 'No se pudo eliminar el gasto.')
+}
+
+async function registrarAporteGasto(gasto) {
+  const monto = window.prompt('¿Cuánto aportaste? (ej: 1500,50)')
+  if (monto === null) return
+  const normalizado = normalizarMonto(monto)
+  if (!normalizado) {
+    error.value = 'Ingresá un monto válido mayor a 0.'
+    return
+  }
+  return accion(async () => {
+    await registrarAporte(id, gasto.id, { monto: normalizado })
+    await refrescar()
+    aviso.value = 'Aporte registrado.'
+  }, 'No se pudo registrar el aporte.')
+}
+
+async function eliminarAporteGasto({ gasto, aporte }) {
+  if (!(await confirmar('¿Borrar este aporte?'))) return
+  return accion(async () => {
+    await eliminarAporte(id, gasto.id, aporte.id)
+    await refrescar()
+    aviso.value = 'Aporte eliminado.'
+  }, 'No se pudo eliminar el aporte.')
 }
 
 const guardarPago = (datos) =>
@@ -209,8 +235,11 @@ onMounted(cargar)
           :gastos="gastos"
           :miembros="grupo.miembros"
           :usuario-id="usuarioId"
+          :es-admin="esAdmin"
           @editar="(g) => (gastoEnEdicion = g)"
           @eliminar="eliminarGasto"
+          @registrar-aporte="registrarAporteGasto"
+          @eliminar-aporte="eliminarAporteGasto"
         />
       </div>
 

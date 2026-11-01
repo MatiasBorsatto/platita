@@ -1,4 +1,4 @@
-const { Movimiento, MiembroGrupo, ParticipacionGasto, PagoEntreMiembros, Usuario } = require('../../db/models');
+const { Movimiento, MiembroGrupo, ParticipacionGasto, PagoEntreMiembros, AporteGasto, Usuario } = require('../../db/models');
 const { aCentavos, deCentavos } = require('../../utils/dinero');
 const { ErrorValidacion } = require('../../utils/errores');
 const { calcularSaldos } = require('./saldos.calculo');
@@ -17,10 +17,13 @@ function agrupar(filas, claveDe) {
 async function saldosDelGrupo(usuarioId, grupoId) {
   const movs = await Movimiento.findAll({
     where: { grupoId, alcance: 'compartido', tipo: 'gasto' },
-    attributes: ['id', 'pagadorId', 'monto'],
+    attributes: ['id', 'monto'],
   });
   const participaciones = movs.length
     ? await ParticipacionGasto.findAll({ where: { movimientoId: movs.map((m) => m.id) } })
+    : [];
+  const aportes = movs.length
+    ? await AporteGasto.findAll({ where: { movimientoId: movs.map((m) => m.id) } })
     : [];
   const pagos = await PagoEntreMiembros.findAll({ where: { grupoId } });
   const miembros = await MiembroGrupo.findAll({
@@ -29,7 +32,7 @@ async function saldosDelGrupo(usuarioId, grupoId) {
   });
 
   const saldos = calcularSaldos({
-    pagadoPorUsuario: agrupar(movs.filter((m) => m.pagadorId), (m) => m.pagadorId),
+    aportadoPorUsuario: agrupar(aportes, (a) => a.usuarioId),
     participacionPorUsuario: agrupar(participaciones, (p) => p.usuarioId),
     pagosRealizados: agrupar(pagos, (p) => p.deudorId),
     pagosRecibidos: agrupar(pagos, (p) => p.acreedorId),

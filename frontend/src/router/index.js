@@ -4,13 +4,14 @@ import LoginView from '../views/LoginView.vue'
 import RegistroView from '../views/RegistroView.vue'
 import MovimientosView from '../views/MovimientosView.vue'
 import PresupuestosView from '../views/PresupuestosView.vue'
-import TarjetasView from '../views/TarjetasView.vue'
+import GastosFijosView from '../views/GastosFijosView.vue'
 import MetasView from '../views/MetasView.vue'
 import GruposView from '../views/GruposView.vue'
 import GrupoDetalleView from '../views/GrupoDetalleView.vue'
 import AceptarInvitacionView from '../views/AceptarInvitacionView.vue'
 import EstadisticasView from '../views/EstadisticasView.vue'
-import TarjetaDetalleView from '../views/TarjetaDetalleView.vue'
+import GastoFijoDetalleView from '../views/GastoFijoDetalleView.vue'
+import CategoriasView from '../views/CategoriasView.vue'
 import PerfilView from '../views/PerfilView.vue'
 import RestablecerView from '../views/RestablecerView.vue'
 import LayoutPrincipal from '../components/LayoutPrincipal.vue'
@@ -27,14 +28,15 @@ export const rutas = [
       { path: '', redirect: '/movimientos' },
       { path: 'movimientos', name: 'movimientos', component: MovimientosView, meta: { requiereAuth: true } },
       { path: 'presupuestos', name: 'presupuestos', component: PresupuestosView, meta: { requiereAuth: true } },
-      { path: 'tarjetas', name: 'tarjetas', component: TarjetasView, meta: { requiereAuth: true } },
+      { path: 'gastos-fijos', name: 'gastos-fijos', component: GastosFijosView, meta: { requiereAuth: true } },
+      { path: 'gastos-fijos/:id', name: 'gasto-fijo-detalle', component: GastoFijoDetalleView, meta: { requiereAuth: true } },
+      { path: 'categorias', name: 'categorias', component: CategoriasView, meta: { requiereAuth: true } },
       { path: 'metas', name: 'metas', component: MetasView, meta: { requiereAuth: true } },
       { path: 'estadisticas', name: 'estadisticas', component: EstadisticasView, meta: { requiereAuth: true } },
       { path: 'perfil', name: 'perfil', component: PerfilView, meta: { requiereAuth: true } },
       { path: 'grupos', name: 'grupos', component: GruposView, meta: { requiereAuth: true } },
       { path: 'grupos/:id', name: 'grupo-detalle', component: GrupoDetalleView, meta: { requiereAuth: true } },
-      { path: 'invitaciones/aceptar', name: 'aceptar-invitacion', component: AceptarInvitacionView, meta: { requiereAuth: true } },
-      { path: 'tarjetas/:id', name: 'tarjeta-detalle', component: TarjetaDetalleView, meta: { requiereAuth: true } }
+      { path: 'invitaciones/aceptar', name: 'aceptar-invitacion', component: AceptarInvitacionView, meta: { requiereAuth: true } }
     ]
   },
   { path: '/:pathMatch(.*)*', redirect: '/' }

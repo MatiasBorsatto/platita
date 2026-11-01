@@ -5,7 +5,6 @@ const usuarioService = require('../usuario/usuario.service');
 const router = Router();
 router.post('/registro', controller.registro);
 router.post('/login', controller.login);
-router.post('/google', controller.google);
 router.post('/refresh', controller.refresh);
 router.post('/logout', controller.logout);
 router.post('/recuperar', async (req, res) => {
