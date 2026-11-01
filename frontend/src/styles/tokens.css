@@ -1,0 +1,141 @@
+:root {
+  /* Base */
+  --fondo: #f4f6fb;
+  --superficie: #ffffff;
+  --superficie-elevada: #fbfcfe;
+  --texto: #111827;
+  --texto-suave: #5b6578;
+  --borde: #e2e6ee;
+
+  /* Marca */
+  --primario: #0b7d63;
+  --primario-hover: #076b54;
+  --primario-texto: #ffffff;
+  --primario-suave: #e3f7f0;
+  --acento: #6d4aff;
+  --acento-suave: #ece7ff;
+  --gradiente-primario: linear-gradient(135deg, #0b7d63 0%, #0f8f86 100%);
+  --gradiente-acento: linear-gradient(135deg, #6d4aff 0%, #a855f7 100%);
+
+  /* Navegación */
+  --sidebar-fondo: linear-gradient(180deg, #111a33 0%, #17204a 100%);
+  --sidebar-texto: #c9d3ea;
+  --sidebar-activo: rgba(20, 184, 166, 0.18);
+  --sidebar-activo-texto: #5eead4;
+
+  /* Estados */
+  --error: #b42318;
+  --error-fondo: #fef3f2;
+  --exito: #067647;
+  --exito-fondo: #ecfdf3;
+  --advertencia: #b54708;
+  --advertencia-fondo: #fffaeb;
+  --insignia: #e11d48;
+  --insignia-texto: #ffffff;
+
+  /* Forma */
+  --radio: 16px;
+  --radio-chico: 10px;
+  --sombra: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --sombra-elevada: 0 12px 32px rgba(16, 24, 40, 0.12);
+  --fondo-decorado:
+    radial-gradient(1200px 500px at 0% -10%, rgba(20, 184, 166, 0.10), transparent 60%),
+    radial-gradient(900px 480px at 100% 0%, rgba(109, 74, 255, 0.08), transparent 55%),
+    #f4f6fb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo: #0b1020;
+    --superficie: #131a2e;
+    --superficie-elevada: #18213a;
+    --texto: #e8ecf8;
+    --texto-suave: #98a3bd;
+    --borde: #26304d;
+    --primario: #2dd4a8;
+    --primario-hover: #5ee2bd;
+    --primario-texto: #04201a;
+    --primario-suave: rgba(45, 212, 168, 0.14);
+    --acento: #a48bff;
+    --acento-suave: rgba(164, 139, 255, 0.16);
+    --sidebar-fondo: linear-gradient(180deg, #070b18 0%, #0e1530 100%);
+    --error: #ff8a80;
+    --error-fondo: #3a1f1d;
+    --exito: #6ee7b7;
+    --exito-fondo: #10291f;
+    --advertencia: #fbbf24;
+    --advertencia-fondo: #33270f;
+    --insignia: #f43f5e;
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --sombra-elevada: 0 16px 40px rgba(0, 0, 0, 0.55);
+    --fondo-decorado:
+      radial-gradient(1200px 500px at 0% -10%, rgba(45, 212, 168, 0.10), transparent 60%),
+      radial-gradient(900px 480px at 100% 0%, rgba(164, 139, 255, 0.10), transparent 55%),
+      #0b1020;
+  }
+}
+
+:root[data-theme="dark"] {
+  --fondo: #0b1020;
+  --superficie: #131a2e;
+  --superficie-elevada: #18213a;
+  --texto: #e8ecf8;
+  --texto-suave: #98a3bd;
+  --borde: #26304d;
+  --primario: #2dd4a8;
+  --primario-hover: #5ee2bd;
+  --primario-texto: #04201a;
+  --primario-suave: rgba(45, 212, 168, 0.14);
+  --acento: #a48bff;
+  --acento-suave: rgba(164, 139, 255, 0.16);
+  --sidebar-fondo: linear-gradient(180deg, #070b18 0%, #0e1530 100%);
+  --error: #ff8a80;
+  --error-fondo: #3a1f1d;
+  --exito: #6ee7b7;
+  --exito-fondo: #10291f;
+  --advertencia: #fbbf24;
+  --advertencia-fondo: #33270f;
+  --insignia: #f43f5e;
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --sombra-elevada: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --fondo-decorado:
+    radial-gradient(1200px 500px at 0% -10%, rgba(45, 212, 168, 0.10), transparent 60%),
+    radial-gradient(900px 480px at 100% 0%, rgba(164, 139, 255, 0.10), transparent 55%),
+    #0b1020;
+}
+
+/* Paleta de gráficos: colores vivos pero con contraste suficiente sobre superficie */
+:root {
+  --grafico-1: #0a9f7a;
+  --grafico-2: #f97316;
+  --grafico-3: #3b82f6;
+  --grafico-4: #a855f7;
+  --grafico-5: #eab308;
+  --grafico-6: #06b6d4;
+  --grafico-7: #ec4899;
+  --grafico-8: #84cc16;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --grafico-1: #2dd4a8;
+    --grafico-2: #fb923c;
+    --grafico-3: #60a5fa;
+    --grafico-4: #c084fc;
+    --grafico-5: #facc15;
+    --grafico-6: #22d3ee;
+    --grafico-7: #f472b6;
+    --grafico-8: #a3e635;
+  }
+}
+
+:root[data-theme="dark"] {
+  --grafico-1: #2dd4a8;
+  --grafico-2: #fb923c;
+  --grafico-3: #60a5fa;
+  --grafico-4: #c084fc;
+  --grafico-5: #facc15;
+  --grafico-6: #22d3ee;
+  --grafico-7: #f472b6;
+  --grafico-8: #a3e635;
+}

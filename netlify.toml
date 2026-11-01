@@ -1,0 +1,16 @@
+[build]
+  command = "cd frontend && npm ci && npm run build"
+  publish = "frontend/dist"
+
+# Las llamadas a la API van al backend en Render; el navegador sigue viendo un solo dominio
+[[redirects]]
+  from = "/api/*"
+  to = "https://finanzas-jaki.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Para que el router de Vue funcione al recargar cualquier ruta
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

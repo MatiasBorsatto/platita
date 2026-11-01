@@ -1,0 +1,156 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--fondo-decorado);
+  background-attachment: fixed;
+  color: var(--texto);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; }
+
+:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offset: 0; }
+
+button { min-height: 44px; }
+
+/* Botón base: las vistas con estilo propio lo sobrescriben */
+button {
+  padding: 10px 16px; border-radius: var(--radio-chico); border: 1px solid var(--borde);
+  background: var(--superficie); color: var(--texto); font-weight: 600; cursor: pointer;
+}
+button[type="submit"] {
+  background: var(--primario); color: var(--primario-texto); border-color: var(--primario);
+}
+button:disabled { opacity: 0.55; cursor: default; }
+
+/* Títulos de página con subrayado de marca */
+main.contenido h1 {
+  position: relative;
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+main.contenido h1::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--primario);
+}
+
+/* Campos de formulario coherentes en toda la app */
+input, select, textarea {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--superficie);
+  color: var(--texto);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primario);
+  box-shadow: 0 0 0 3px var(--primario-suave);
+}
+
+/* Acceso (login, registro, recuperación) */
+.tarjeta-acceso {
+  position: relative;
+  max-width: 420px;
+  margin: 8vh auto 0;
+  padding: 32px 28px 28px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-elevada);
+  width: calc(100% - 32px);
+  overflow: hidden;
+}
+.tarjeta-acceso::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: var(--primario);
+}
+
+.tarjeta-acceso h1 { margin-top: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
+.tarjeta-acceso label { display: block; margin-bottom: 14px; color: var(--texto-suave); font-size: 0.9rem; font-weight: 500; }
+.tarjeta-acceso input {
+  display: block; width: 100%; margin-top: 6px; padding: 11px 12px;
+  background: var(--fondo); color: var(--texto);
+  border: 1px solid var(--borde); border-radius: var(--radio-chico);
+}
+.tarjeta-acceso button {
+  width: 100%; padding: 12px; border: 0; border-radius: var(--radio-chico); cursor: pointer;
+  background: var(--primario); color: var(--primario-texto); font-weight: 700;
+}
+.tarjeta-acceso button:hover:not(:disabled) { filter: brightness(1.05); }
+.tarjeta-acceso button:disabled { opacity: 0.6; cursor: default; box-shadow: none; }
+.error-form {
+  padding: 10px 12px; margin-bottom: 12px; border-radius: var(--radio-chico);
+  background: var(--error-fondo); color: var(--error); border: 1px solid currentColor;
+  border-color: color-mix(in srgb, var(--error) 35%, transparent);
+}
+.pie-acceso { margin-bottom: 0; text-align: center; color: var(--texto-suave); }
+.pie-acceso a { color: var(--primario); font-weight: 600; }
+
+.solo-lectores {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Movimiento y retroalimentación */
+button, a, .tarjeta-acceso button {
+  transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+button:active:not(:disabled) { transform: scale(0.97); }
+a:hover { text-decoration: underline; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Superficie de contenido: tarjeta blanca con sombra suave */
+.panel {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 20px;
+}
+
+/* Jerarquía del contenido: ancho de lectura y bloques separados por espacio uniforme */
+main.contenido > section { position: relative; max-width: 1120px; }
+main.contenido > section > h1 { margin-bottom: 24px; }
+main.contenido > section > section,
+main.contenido > section > .panel { margin-top: 0; }
+form.panel { display: grid; gap: 14px; }
+form.panel label { display: grid; gap: 6px; color: var(--texto-suave); font-size: 0.9rem; font-weight: 500; min-width: 0; }
+form.panel input, form.panel select { width: 100%; min-height: 42px; padding: 0 12px; }
+
+/* Trabajo en curso: los botones no responden y los de envío muestran un giro */
+body.procesando button { pointer-events: none; opacity: 0.8; }
+body.procesando button[type="submit"] { position: relative; color: transparent !important; }
+body.procesando button[type="submit"]::after {
+  content: ''; position: absolute; top: 50%; left: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  color: var(--primario-texto); animation: giro-boton 0.7s linear infinite;
+}
+@keyframes giro-boton { to { transform: rotate(360deg); } }
+
+/* Formularios: campos de alto uniforme y botones alineados a la izquierda */
+input[type="checkbox"] { width: 20px; height: 20px; min-height: auto; margin: 0; flex: none; accent-color: var(--primario); }
+form.panel input:not([type="checkbox"]), form.panel select { height: 46px; }
+form.panel > button[type="submit"] { justify-self: start; min-width: 200px; }
