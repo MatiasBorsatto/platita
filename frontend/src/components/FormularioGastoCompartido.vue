@@ -211,7 +211,12 @@ function enviar() {
 .reparto { grid-column: 1 / -1; list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .reparto li { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; align-items: center; gap: 8px; }
 .reparto select { max-width: 100%; padding: 8px; background: var(--superficie); color: var(--texto); border: 1px solid var(--borde); border-radius: 8px; }
-.reparto input { width: 100%; margin: 0; }\n  .corresponde { color: var(--texto-suave); }\n  @media (max-width: 900px) {\n    .cabecera-reparto { display: none; }\n    .reparto li { grid-template-columns: 1fr; }\n  }
+.reparto input { width: 100%; margin: 0; }
+.corresponde { color: var(--texto-suave); }
+@media (max-width: 900px) {
+  .cabecera-reparto { display: none; }
+  .reparto li { grid-template-columns: 1fr; }
+}
 .nombre { overflow-wrap: anywhere; min-width: 0; }
 .aviso { grid-column: 1 / -1; margin: 0; color: var(--error); }
 .acciones { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
