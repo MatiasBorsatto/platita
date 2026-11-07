@@ -139,7 +139,7 @@ async function generarCuotasDeConcepto(concepto, { transaction, hasta = null, me
     diaVencimiento: gasto.diaVencimiento,
   });
   for (const f of filas) {
-    if (f.mes < hoy.slice(0, 7) && f.fechaVencimiento < hoy) continue;
+    // Las cuotas vencidas también se crean: se muestran como deuda en el módulo Deudas.
     await CuotaGastoFijo.findOrCreate({
       where: { conceptoId: concepto.id, mes: f.mes },
       defaults: {

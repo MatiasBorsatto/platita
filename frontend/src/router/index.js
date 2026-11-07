@@ -15,6 +15,7 @@ import CategoriasView from '../views/CategoriasView.vue'
 import PerfilView from '../views/PerfilView.vue'
 import RestablecerView from '../views/RestablecerView.vue'
 import CompletarFechaView from '../views/CompletarFechaView.vue'
+import DeudasView from '../views/DeudasView.vue'
 import LayoutPrincipal from '../components/LayoutPrincipal.vue'
 
 export const rutas = [
@@ -35,6 +36,7 @@ export const rutas = [
       { path: 'categorias', name: 'categorias', component: CategoriasView, meta: { requiereAuth: true } },
       { path: 'metas', name: 'metas', component: MetasView, meta: { requiereAuth: true } },
       { path: 'estadisticas', name: 'estadisticas', component: EstadisticasView, meta: { requiereAuth: true } },
+      { path: 'deudas', name: 'deudas', component: DeudasView, meta: { requiereAuth: true } },
       { path: 'perfil', name: 'perfil', component: PerfilView, meta: { requiereAuth: true } },
       { path: 'grupos', name: 'grupos', component: GruposView, meta: { requiereAuth: true } },
       { path: 'grupos/:id', name: 'grupo-detalle', component: GrupoDetalleView, meta: { requiereAuth: true } },
