@@ -55,8 +55,10 @@ async function alternar(menor, permiso, valor) {
     const actualizado = await cambiarPermisos(menor.menor.id, menor.grupoId, { [permiso]: valor })
     Object.assign(menor, actualizado)
   } catch (e) {
-    error.value = e.mensaje || 'No se pudo cambiar el permiso.'
+    const mensaje = e.mensaje || 'No se pudo cambiar el permiso.'
+    // cargar() limpia el error, así que se muestra después de recargar.
     await cargar()
+    error.value = mensaje
   }
 }
 

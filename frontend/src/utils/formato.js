@@ -13,6 +13,12 @@ export function formatearMonto(monto) {
   return `${m[1]}$ ${enteros},${decimales}`
 }
 
+// Monto con su moneda: en pesos usa "$"; en otras monedas muestra el código ("USD 1.500,00").
+export function formatearMontoEn(monto, moneda = 'ARS') {
+  const texto = formatearMonto(monto)
+  return moneda === 'ARS' ? texto : texto.replace(/^(-?)\$ /, `$1${moneda} `)
+}
+
 // Acepta "1500", "1500.5" o "1.500,50"/"1500,5"; devuelve "1500.50" o null si es inválido.
 export function normalizarMonto(texto) {
   let t = String(texto ?? '').trim()

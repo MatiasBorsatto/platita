@@ -108,7 +108,7 @@ onMounted(async () => {
           <h2>{{ nombreCategoria(p.categoriaId) }} <span class="moneda">{{ p.moneda }}</span></h2>
           <button type="button" @click="eliminar(p)">Eliminar</button>
         </div>
-        <BarraPresupuesto :monto-limite="p.montoLimite" :consumido="p.consumido" :restante="p.restante" :porcentaje="p.porcentaje" :alerta="p.alerta" />
+        <BarraPresupuesto :monto-limite="p.montoLimite" :moneda="p.moneda" :consumido="p.consumido" :restante="p.restante" :porcentaje="p.porcentaje" :alerta="p.alerta" />
       </li>
     </ul>
   </section>

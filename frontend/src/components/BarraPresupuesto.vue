@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { formatearMonto } from '../utils/formato.js'
+import { formatearMontoEn } from '../utils/formato.js'
 import { crecerBarra } from '../motion/movimiento.js'
 
 const props = defineProps({
@@ -8,7 +8,8 @@ const props = defineProps({
   consumido: { type: String, required: true },
   restante: { type: String, required: true },
   porcentaje: { type: Number, required: true },
-  alerta: { type: String, default: null }
+  alerta: { type: String, default: null },
+  moneda: { type: String, default: 'ARS' }
 })
 
 const ancho = computed(() => Math.max(0, Math.min(props.porcentaje, 100)))
@@ -37,8 +38,8 @@ onMounted(() => crecerBarra(relleno.value, ancho.value))
     <p class="detalle">
       <strong>{{ porcentaje }}%</strong>
       <span class="etiqueta" :class="estado">{{ etiqueta }}</span>
-      <span class="montos">{{ formatearMonto(consumido) }} de {{ formatearMonto(montoLimite) }}</span>
-      <span class="montos">Restante: {{ formatearMonto(restante) }}</span>
+      <span class="montos">{{ formatearMontoEn(consumido, moneda) }} de {{ formatearMontoEn(montoLimite, moneda) }}</span>
+      <span class="montos">Restante: {{ formatearMontoEn(restante, moneda) }}</span>
     </p>
   </div>
 </template>
