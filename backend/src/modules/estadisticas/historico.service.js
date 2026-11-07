@@ -5,19 +5,25 @@ const { ErrorProhibido } = require('../../utils/errores');
 const { rangoDelMes } = require('../movimientos/movimientos.service');
 const { calcularSaldos } = require('../saldos/saldos.calculo');
 const { calcularResumen } = require('./resumenMensual.calculo');
-const { lineasDelMes, aportesDelMes } = require('./estadisticas.service');
+const { lineasDelRango, aportesDelRango } = require('./estadisticas.service');
 const { mesesEnRango } = require('./historico.calculo');
 
 // Solo lectura: reutiliza las reglas del resumen mensual (sin presupuestos, que pueden escribir alertas).
+// Dos consultas en total para todo el rango (antes eran dos por mes), agrupadas por mes en memoria.
 async function serieHistorica(usuarioId, desde, hasta) {
   const meses = mesesEnRango(desde, hasta);
-  const serie = [];
-  for (const mes of meses) {
-    const [lineas, aportesMetas] = await Promise.all([lineasDelMes(usuarioId, mes), aportesDelMes(usuarioId, mes)]);
-    const { ingresos, gastos, ahorroNeto, gastosPorCategoria } = calcularResumen(lineas, []);
-    serie.push({ mes, ingresos, gastos, ahorroNeto, gastosPorCategoria, aportesMetas });
+  const [lineas, aportes] = await Promise.all([
+    lineasDelRango(usuarioId, desde, hasta),
+    aportesDelRango(usuarioId, desde, hasta),
+  ]);
+  const porMes = new Map(meses.map((mes) => [mes, []]));
+  for (const l of lineas) {
+    if (porMes.has(l.mes)) porMes.get(l.mes).push(l);
   }
-  return serie;
+  return meses.map((mes) => {
+    const { ingresos, gastos, ahorroNeto, gastosPorCategoria } = calcularResumen(porMes.get(mes), []);
+    return { mes, ingresos, gastos, ahorroNeto, gastosPorCategoria, aportesMetas: aportes.get(mes) ?? '0.00' };
+  });
 }
 
 function sumarPor(filas, claveDe) {

@@ -11,7 +11,7 @@ async function lineasDelMes(usuarioId, mes) {
   const fecha = { [Op.between]: rangoDelMes(mes) };
   const personales = await Movimiento.findAll({
     where: { usuarioId, alcance: 'personal', tipo: ['ingreso', 'gasto'], fecha },
-    attributes: ['tipo', 'monto', 'categoriaId'],
+    attributes: ['tipo', 'monto', 'categoriaId', 'moneda'],
   });
   const partes = await ParticipacionGasto.findAll({
     where: { usuarioId },
@@ -19,13 +19,13 @@ async function lineasDelMes(usuarioId, mes) {
     include: [{
       model: Movimiento,
       required: true,
-      attributes: [],
+      attributes: ['moneda'],
       where: { tipo: 'gasto', alcance: 'compartido', fecha },
     }],
   });
   const lineas = [
-    ...personales.map((m) => ({ tipo: m.tipo, monto: m.monto, categoriaId: m.categoriaId })),
-    ...partes.map((p) => ({ tipo: 'gasto', monto: p.monto, categoriaId: p.categoriaId })),
+    ...personales.map((m) => ({ tipo: m.tipo, monto: m.monto, categoriaId: m.categoriaId, moneda: m.moneda })),
+    ...partes.map((p) => ({ tipo: 'gasto', monto: p.monto, categoriaId: p.categoriaId, moneda: p.Movimiento.moneda })),
   ];
   const catIds = [...new Set(lineas.map((l) => l.categoriaId).filter(Boolean))];
   const categorias = catIds.length ? await Categoria.findAll({ where: { id: catIds }, attributes: ['id', 'nombre'] }) : [];
@@ -44,13 +44,70 @@ async function aportesDelMes(usuarioId, mes) {
   return sumar(aportes.map((a) => a.monto));
 }
 
+// Un resumen por moneda, sin convertir entre ellas.
+function resumenPorMoneda(lineas) {
+  const grupos = new Map();
+  for (const l of lineas) {
+    if (!grupos.has(l.moneda)) grupos.set(l.moneda, []);
+    grupos.get(l.moneda).push(l);
+  }
+  return [...grupos].map(([moneda, ls]) => ({ moneda, ...calcularResumen(ls, []) }));
+}
+
+// Mismas líneas que lineasDelMes, pero para todo un rango de meses en una sola consulta.
+// Cada línea trae su mes (AAAA-MM) para agruparla en memoria.
+async function lineasDelRango(usuarioId, desde, hasta) {
+  const fecha = { [Op.between]: [rangoDelMes(desde)[0], rangoDelMes(hasta)[1]] };
+  const personales = await Movimiento.findAll({
+    where: { usuarioId, alcance: 'personal', tipo: ['ingreso', 'gasto'], fecha },
+    attributes: ['tipo', 'monto', 'categoriaId', 'fecha'],
+  });
+  const partes = await ParticipacionGasto.findAll({
+    where: { usuarioId },
+    attributes: ['monto', 'categoriaId'],
+    include: [{
+      model: Movimiento,
+      required: true,
+      attributes: ['fecha'],
+      where: { tipo: 'gasto', alcance: 'compartido', fecha },
+    }],
+  });
+  const lineas = [
+    ...personales.map((m) => ({ mes: m.fecha.slice(0, 7), tipo: m.tipo, monto: m.monto, categoriaId: m.categoriaId })),
+    ...partes.map((p) => ({ mes: p.Movimiento.fecha.slice(0, 7), tipo: 'gasto', monto: p.monto, categoriaId: p.categoriaId })),
+  ];
+  const catIds = [...new Set(lineas.map((l) => l.categoriaId).filter(Boolean))];
+  const categorias = catIds.length ? await Categoria.findAll({ where: { id: catIds }, attributes: ['id', 'nombre'] }) : [];
+  const nombres = new Map(categorias.map((c) => [c.id, c.nombre]));
+  return lineas.map((l) => ({ ...l, nombre: nombres.get(l.categoriaId) ?? null }));
+}
+
+// Mismos aportes que aportesDelMes, agrupados por mes en una sola consulta.
+async function aportesDelRango(usuarioId, desde, hasta) {
+  const porMes = new Map();
+  const metas = await Meta.findAll({ where: { usuarioId }, attributes: ['id'] });
+  if (metas.length === 0) return porMes;
+  const aportes = await AporteMeta.findAll({
+    where: { metaId: metas.map((m) => m.id), fecha: { [Op.between]: [rangoDelMes(desde)[0], rangoDelMes(hasta)[1]] } },
+    attributes: ['monto', 'fecha'],
+  });
+  for (const a of aportes) {
+    const mes = a.fecha.slice(0, 7);
+    if (!porMes.has(mes)) porMes.set(mes, []);
+    porMes.get(mes).push(a.monto);
+  }
+  return new Map([...porMes].map(([mes, montos]) => [mes, sumar(montos)]));
+}
+
 async function resumenMensual(usuarioId, mes) {
   const [lineas, presupuestos, aportesMetas] = await Promise.all([
     lineasDelMes(usuarioId, mes),
     calcularEstadosPresupuestos(usuarioId, mes),
     aportesDelMes(usuarioId, mes),
   ]);
-  return { mes, ...calcularResumen(lineas, presupuestos), aportesMetas };
+  // Los totales de primer nivel son en pesos. Cada moneda también aparece por separado, sin convertir.
+  const pesos = lineas.filter((l) => l.moneda === 'ARS');
+  return { mes, ...calcularResumen(pesos, presupuestos), aportesMetas, porMoneda: resumenPorMoneda(lineas) };
 }
 
-module.exports = { resumenMensual, lineasDelMes, aportesDelMes };
+module.exports = { resumenMensual, lineasDelMes, aportesDelMes, lineasDelRango, aportesDelRango, resumenPorMoneda };

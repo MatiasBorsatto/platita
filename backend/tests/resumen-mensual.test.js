@@ -114,7 +114,7 @@ test('mes vacío devuelve ceros', async () => {
   expect(res.status).toBe(200);
   expect(res.body).toEqual({
     mes: '2025-01', ingresos: '0.00', gastos: '0.00', ahorroNeto: '0.00',
-    gastosPorCategoria: [], presupuestos: [], aportesMetas: '0.00',
+    gastosPorCategoria: [], presupuestos: [], aportesMetas: '0.00', porMoneda: [],
   });
 });
 

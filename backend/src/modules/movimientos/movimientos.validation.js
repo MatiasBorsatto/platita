@@ -42,9 +42,17 @@ function validarMes(mes) {
   return mes;
 }
 
+// Código ISO de 3 letras. Sin moneda explícita, el movimiento es en pesos.
+function validarMoneda(valor) {
+  if (valor === undefined || valor === null) return 'ARS';
+  if (typeof valor !== 'string' || !/^[A-Z]{3}$/.test(valor)) throw new ErrorValidacion('La moneda debe ser un código de 3 letras (por ejemplo ARS)');
+  return valor;
+}
+
 function validarCrear(body = {}) {
   return {
     tipo: validarTipo(body.tipo),
+    moneda: validarMoneda(body.moneda),
     monto: validarMonto(body.monto),
     fecha: validarFecha(body.fecha),
     descripcion: validarDescripcion(body.descripcion),
