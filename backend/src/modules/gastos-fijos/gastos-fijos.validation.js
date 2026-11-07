@@ -56,6 +56,48 @@ function validarConcepto(body = {}, { parcial = false } = {}) {
   return datos;
 }
 
+const TIPOS_PAGO = ['simple', 'tarjeta_credito', 'tarjeta_debito'];
+const AMBITOS = ['propio', 'grupo'];
+// Nunca se aceptan datos sensibles de la tarjeta, aunque el cliente los envíe.
+const CAMPOS_PROHIBIDOS = ['numeroTarjeta', 'numeroCompleto', 'cvv', 'pin', 'codigoSeguridad'];
+
+function validarDatosDePago(body, datos, { parcial }) {
+  for (const campo of CAMPOS_PROHIBIDOS) {
+    if (body[campo] !== undefined) throw new ErrorValidacion('No se aceptan datos sensibles de la tarjeta');
+  }
+  if (body.tipoPago === undefined) {
+    if (!parcial) datos.tipoPago = 'simple';
+    return;
+  }
+  if (!TIPOS_PAGO.includes(body.tipoPago)) throw new ErrorValidacion('El tipo de pago debe ser simple, tarjeta_credito o tarjeta_debito');
+  datos.tipoPago = body.tipoPago;
+  if (body.tipoPago === 'simple') {
+    Object.assign(datos, { tarjetaTipo: null, ultimosCuatro: null, banco: null, titular: null, alias: null });
+    return;
+  }
+  if (!/^\d{4}$/.test(String(body.ultimosCuatro ?? ''))) throw new ErrorValidacion('Los últimos cuatro dígitos deben ser exactamente cuatro números');
+  datos.tarjetaTipo = body.tipoPago === 'tarjeta_credito' ? 'credito' : 'debito';
+  datos.ultimosCuatro = String(body.ultimosCuatro);
+  datos.banco = texto(body.banco, 'El banco', 60);
+  datos.titular = texto(body.titular, 'El titular', 100);
+  datos.alias = body.alias === undefined || body.alias === null || body.alias === '' ? null : texto(body.alias, 'El alias', 60);
+}
+
+function validarAmbito(body, datos, { parcial }) {
+  if (body.ambito === undefined) {
+    if (!parcial) datos.ambito = 'propio';
+    if (!parcial) datos.grupoId = null;
+    return;
+  }
+  if (!AMBITOS.includes(body.ambito)) throw new ErrorValidacion('El ámbito debe ser propio o grupo');
+  datos.ambito = body.ambito;
+  if (body.ambito === 'grupo') {
+    datos.grupoId = validarUuid(body.grupoId, 'grupoId');
+  } else {
+    datos.grupoId = null;
+  }
+}
+
 function validarGastoFijo(body = {}, { parcial = false } = {}) {
   const datos = {};
   if (!parcial || body.nombre !== undefined) datos.nombre = texto(body.nombre, 'El nombre', 100);
@@ -70,6 +112,13 @@ function validarGastoFijo(body = {}, { parcial = false } = {}) {
   if (body.archivado !== undefined) {
     if (typeof body.archivado !== 'boolean') throw new ErrorValidacion('archivado debe ser booleano');
     datos.archivado = body.archivado;
+  }
+  validarDatosDePago(body, datos, { parcial });
+  validarAmbito(body, datos, { parcial });
+  if (!parcial || body.moneda !== undefined) {
+    const moneda = body.moneda === undefined ? 'ARS' : body.moneda;
+    if (typeof moneda !== 'string' || !/^[A-Z]{3}$/.test(moneda)) throw new ErrorValidacion('La moneda debe ser un código de 3 letras (por ejemplo ARS)');
+    datos.moneda = moneda;
   }
   if (!parcial && body.conceptos !== undefined) {
     if (!Array.isArray(body.conceptos)) throw new ErrorValidacion('conceptos debe ser una lista');

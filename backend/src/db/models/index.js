@@ -74,6 +74,9 @@ GastoFijo.hasMany(Movimiento, { foreignKey: 'gastoFijoId' });
 Movimiento.belongsTo(GastoFijo, { foreignKey: 'gastoFijoId' });
 
 module.exports = {
+  VinculoTutor,
+  PermisoMenor,
+  RegistroAuditoria,
   Usuario,
   Categoria,
   Movimiento,

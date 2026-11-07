@@ -5,6 +5,49 @@ const { validarUuid, validarMes } = require('../movimientos/movimientos.validati
 const { hoyBA } = require('../../utils/fechas');
 const { validarGastoFijo, validarConcepto, validarPago } = require('./gastos-fijos.validation');
 const service = require('./gastos-fijos.service');
+const { exigir, clasificacionDe } = require('../autorizacion/autorizacion.service');
+const { PERMISOS } = require('../autorizacion/permisos');
+const { GastoFijo, MiembroGrupo } = require('../../db/models');
+const { ErrorNoEncontrado } = require('../../utils/errores');
+
+// Permiso según el tipo de pago: los gastos con tarjeta tienen permisos propios, que un menor nunca obtiene.
+function permisoPara(tipoPago, accion) {
+  const tarjeta = tipoPago !== 'simple';
+  const mapa = {
+    crear: tarjeta ? PERMISOS.TARJETAS_REGISTRAR : PERMISOS.GASTOS_FIJOS_CREAR,
+    editar: tarjeta ? PERMISOS.TARJETAS_MODIFICAR : PERMISOS.GASTOS_FIJOS_EDITAR,
+    eliminar: tarjeta ? PERMISOS.TARJETAS_ELIMINAR : PERMISOS.GASTOS_FIJOS_ELIMINAR,
+  };
+  return mapa[accion];
+}
+
+// Editar o eliminar exige permiso sobre el tipo actual del gasto y, si cambia, sobre el nuevo.
+async function exigirSobreGastoExistente(usuarioId, id, tipoNuevo, accion) {
+  const actual = await GastoFijo.findOne({ where: { id, usuarioId }, attributes: ['tipoPago'] });
+  if (!actual) return; // el servicio responde 404 sin revelar si el gasto existe
+  await exigir(usuarioId, permisoPara(actual.tipoPago, accion));
+  if (tipoNuevo && tipoNuevo !== actual.tipoPago) await exigir(usuarioId, permisoPara(tipoNuevo, accion));
+}
+
+async function exigirMiembro(usuarioId, grupoId) {
+  const miembro = await MiembroGrupo.findOne({ where: { grupoId, usuarioId } });
+  if (!miembro) throw new ErrorNoEncontrado('Grupo no encontrado');
+}
+
+// Los menores nunca ven los datos bancarios de una tarjeta, aunque el gasto sea del grupo.
+const DATOS_TARJETA = ['tarjetaTipo', 'ultimosCuatro', 'banco', 'titular', 'alias'];
+function sinDatosTarjeta(dto) {
+  const quitar = (d) => {
+    const copia = { ...d };
+    for (const campo of DATOS_TARJETA) delete copia[campo];
+    return copia;
+  };
+  return Array.isArray(dto) ? dto.map(quitar) : quitar(dto);
+}
+
+async function respuestaSegunClase(usuarioId, dto) {
+  return (await clasificacionDe(usuarioId)) === 'adulto' ? dto : sinDatosTarjeta(dto);
+}
 
 const router = Router();
 router.use(autenticar);
@@ -21,11 +64,14 @@ router.param('cuotaId', (req, res, next, valor) => {
 const mesDeQuery = (query) => (query.mes === undefined ? hoyBA().slice(0, 7) : validarMes(query.mes));
 
 router.get('/', async (req, res) => {
-  res.json(await service.listarGastosFijos(req.usuario.id));
+  res.json(await respuestaSegunClase(req.usuario.id, await service.listarGastosFijos(req.usuario.id)));
 });
 
 router.post('/', async (req, res) => {
-  res.status(201).json(await service.crearGastoFijo(req.usuario.id, validarGastoFijo(req.body)));
+  const datos = validarGastoFijo(req.body);
+  await exigir(req.usuario.id, permisoPara(datos.tipoPago, 'crear'));
+  if (datos.ambito === 'grupo') await exigirMiembro(req.usuario.id, datos.grupoId);
+  res.status(201).json(await service.crearGastoFijo(req.usuario.id, datos));
 });
 
 router.get('/vencimientos', async (req, res) => {
@@ -38,20 +84,17 @@ router.get('/recordatorios', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   const mes = req.query.mes === undefined ? null : validarMes(req.query.mes);
-  res.json(await service.obtenerGastoFijo(req.usuario.id, req.params.id, mes));
+  res.json(await respuestaSegunClase(req.usuario.id, await service.obtenerGastoFijo(req.usuario.id, req.params.id, mes)));
 });
 
 router.patch('/:id', async (req, res) => {
-  res.json(
-    await service.editarGastoFijo(
-      req.usuario.id,
-      req.params.id,
-      validarGastoFijo(req.body, { parcial: true })
-    )
-  );
+  const datos = validarGastoFijo(req.body, { parcial: true });
+  await exigirSobreGastoExistente(req.usuario.id, req.params.id, datos.tipoPago, 'editar');
+  res.json(await service.editarGastoFijo(req.usuario.id, req.params.id, datos));
 });
 
 router.delete('/:id', async (req, res) => {
+  await exigirSobreGastoExistente(req.usuario.id, req.params.id, undefined, 'eliminar');
   res.json(await service.eliminarGastoFijo(req.usuario.id, req.params.id));
 });
 
