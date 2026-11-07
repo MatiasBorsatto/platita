@@ -8,6 +8,7 @@ const presupuestosRoutes = require('./modules/presupuestos/presupuestos.routes')
 const notificacionesRoutes = require('./modules/notificaciones/notificaciones.routes');
 const gastosFijosRoutes = require('./modules/gastos-fijos/gastos-fijos.routes');
 const deudasRoutes = require('./modules/deudas/deudas.routes');
+const controlParentalRoutes = require('./modules/control-parental/control-parental.routes');
 const metasRoutes = require('./modules/metas/metas.routes');
 const gruposRoutes = require('./modules/grupos/grupos.routes');
 const saldosRoutes = require('./modules/saldos/saldos.routes');
@@ -32,6 +33,7 @@ function createApp() {
   app.use('/api/notificaciones', notificacionesRoutes);
   app.use('/api/gastos-fijos', gastosFijosRoutes);
   app.use('/api/deudas', deudasRoutes);
+  app.use('/api/control-parental', controlParentalRoutes);
   app.use('/api/metas', metasRoutes);
   app.use('/api/grupos', gruposRoutes);
   app.use('/api/grupos', saldosRoutes);
