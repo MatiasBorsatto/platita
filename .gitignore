@@ -2,3 +2,5 @@ node_modules/
 .env
 .superpowers/
 dist/
+finanzas-jaki/
+tmp.txt

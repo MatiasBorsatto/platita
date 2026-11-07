@@ -136,7 +136,11 @@ test('saldosHistoricos acumula hasta fin de cada mes, incluye pagos y exige ser 
   expect(saldo(r[1], ids.b)).toBe('-25.00');
   expect(saldo(r[2], ids.a)).toBe('15.00');
   expect(saldo(r[2], ids.b)).toBe('-15.00');
-  const ajeno = await Usuario.create({ nombre: 'X', email: `hist-x-${sufijo}@example.com` });
+  const ajeno = await Usuario.create({
+    nombre: 'X',
+    email: `hist-x-${sufijo}@example.com`,
+    passwordHash: 'no-se-usa-en-este-test',
+  });
   await expect(saldosHistoricos(ajeno.id, grupoId, '2026-02', '2026-02')).rejects.toThrow();
   await Usuario.destroy({ where: { id: ajeno.id } });
 });

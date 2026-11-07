@@ -65,9 +65,22 @@ function validarEditar(body = {}) {
   return datos;
 }
 
+function validarAportes(aportes) {
+  if (aportes === undefined || aportes === null) return undefined;
+  if (!Array.isArray(aportes)) throw new ErrorValidacion('aportes debe ser una lista');
+  return aportes.map((a) => {
+    const dato = {
+      usuarioId: validarUuid(a?.usuarioId, 'usuarioId'),
+      monto: validarMonto(a?.monto),
+    };
+    if (a?.fecha !== undefined && a?.fecha !== null) dato.fecha = validarFecha(a.fecha);
+    return dato;
+  });
+}
+
 function validarGastoCompartido(body = {}) {
   const datos = {
-    pagadorId: validarUuid(body.pagadorId, 'pagadorId'),
+    pagadorId: body.pagadorId ? validarUuid(body.pagadorId, 'pagadorId') : null,
     monto: validarMonto(body.monto),
     fecha: validarFecha(body.fecha),
     descripcion: validarDescripcion(body.descripcion),
@@ -83,6 +96,7 @@ function validarGastoCompartido(body = {}) {
       categoriaId: p?.categoriaId ? validarUuid(p.categoriaId, 'categoriaId') : null,
     }));
   }
+  if (body.aportes !== undefined) datos.aportes = validarAportes(body.aportes);
   return datos;
 }
 
@@ -101,14 +115,25 @@ function validarEdicionGastoCompartido(body = {}) {
   }
   if (body.pagadorId !== undefined) datos.pagadorId = validarUuid(body.pagadorId, 'pagadorId');
   if (body.participantes !== undefined && body.participantes !== null) {
-    datos.participantes = validarGastoCompartido({
-      ...body,
-      pagadorId: body.pagadorId ?? '00000000-0000-4000-8000-000000000000',
-      monto: '1',
-      fecha: '2000-01-01',
-    }).participantes;
+    if (!Array.isArray(body.participantes) || body.participantes.length === 0) {
+      throw new ErrorValidacion('participantes debe ser una lista no vacía');
+    }
+    datos.participantes = body.participantes.map((p) => ({
+      usuarioId: validarUuid(p?.usuarioId, 'usuarioId'),
+      monto: validarMonto(p?.monto),
+      categoriaId: p?.categoriaId ? validarUuid(p.categoriaId, 'categoriaId') : null,
+    }));
   }
+  if (body.aportes !== undefined) datos.aportes = validarAportes(body.aportes);
   return datos;
+}
+
+function validarAporte(body = {}) {
+  return {
+    usuarioId: body.usuarioId === undefined ? null : validarUuid(body.usuarioId, 'usuarioId'),
+    monto: validarMonto(body.monto),
+    fecha: body.fecha === undefined ? null : validarFecha(body.fecha),
+  };
 }
 
 function entero(valor, nombre) {
@@ -133,6 +158,7 @@ module.exports = {
   validarCrear,
   validarGastoCompartido,
   validarEdicionGastoCompartido,
+  validarAporte,
   validarEditar,
   validarFiltros,
   validarMes,

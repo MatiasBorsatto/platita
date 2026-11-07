@@ -1,7 +1,7 @@
 const request = require('supertest');
 const { createApp } = require('../src/app');
 const { sequelize } = require('../src/db/sequelize');
-const { Usuario, Grupo, MiembroGrupo, Movimiento, ParticipacionGasto } = require('../src/db/models');
+const { Usuario, Grupo, MiembroGrupo, Movimiento, ParticipacionGasto, AporteGasto } = require('../src/db/models');
 
 const app = createApp();
 const sufijo = Date.now();
@@ -38,6 +38,7 @@ beforeAll(async () => {
 afterAll(async () => {
   const movs = await Movimiento.findAll({ where: { grupoId } });
   await ParticipacionGasto.destroy({ where: { movimientoId: movs.map((m) => m.id) } });
+  await AporteGasto.destroy({ where: { movimientoId: movs.map((m) => m.id) } });
   await Movimiento.destroy({ where: { grupoId } });
   await MiembroGrupo.destroy({ where: { grupoId } });
   await Grupo.destroy({ where: { id: grupoId } });

@@ -26,6 +26,19 @@ function mesDe(fecha) {
   return formatoMes(anio, mes);
 }
 
+// Fecha de hoy en Buenos Aires como YYYY-MM-DD.
+function hoyBA(fecha = new Date()) {
+  const { anio, mes, dia } = partesBA(fecha);
+  return `${formatoMes(anio, mes)}-${String(dia).padStart(2, '0')}`;
+}
+
+// Suma días a una fecha YYYY-MM-DD sin pasar por zonas horarias del sistema.
+function sumarDias(fecha, dias) {
+  const [anio, mes, dia] = fecha.split('-').map(Number);
+  const d = new Date(Date.UTC(anio, mes - 1, dia) + dias * 24 * 60 * 60 * 1000);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
 function diaValido(anio, mes, dia) {
   const ultimo = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
   return Math.min(dia, ultimo);
@@ -47,4 +60,4 @@ function mesDeCuota(fechaCompra, diaCierre, numeroCuota) {
   return formatoMes(r.anio, r.mes);
 }
 
-module.exports = { mesDe, diaValido, periodoResumen, mesDeCuota };
+module.exports = { mesDe, hoyBA, sumarDias, sumarMeses, formatoMes, diaValido, periodoResumen, mesDeCuota };

@@ -2,8 +2,8 @@ const request = require('supertest');
 const { createApp } = require('../src/app');
 const { sequelize } = require('../src/db/sequelize');
 const {
-  Usuario, Categoria, Movimiento, Presupuesto, Tarjeta, Compra, Meta, AporteMeta,
-  Grupo, MiembroGrupo, ParticipacionGasto, PagoEntreMiembros, Notificacion,
+  Usuario, Categoria, Movimiento, Presupuesto, GastoFijo, ConceptoGastoFijo, CuotaGastoFijo,
+  Meta, AporteMeta, Grupo, MiembroGrupo, ParticipacionGasto, AporteGasto, PagoEntreMiembros, Notificacion,
 } = require('../src/db/models');
 
 const app = createApp();
@@ -39,9 +39,10 @@ beforeAll(async () => {
   const pres = await agentA
     .put('/api/presupuestos')
     .send({ categoriaId: cat.id, mes: '2026-10', montoLimite: '500.00' });
-  const tarjeta = await agentA.post('/api/tarjetas').send({ nombre: 'Visa A', diaCierre: 10, diaVencimiento: 20 });
-  const compra = await agentA.post(`/api/tarjetas/${tarjeta.body.id}/compras`).send({
-    montoTotal: '300.00', cuotas: 3, modalidad: 'por_cuota', fecha: '2026-10-05', descripcion: 'tele',
+  const gastoFijo = await agentA.post('/api/gastos-fijos').send({
+    nombre: 'Servicios A',
+    diaVencimiento: 10,
+    conceptos: [{ nombre: 'Internet', montoTotal: '3000.00', cuotas: 12 }],
   });
   const meta = await agentA.post('/api/metas').send({ nombre: 'Viaje', montoObjetivo: '1000.00' });
   const grupo = await agentA.post('/api/grupos').send({ nombre: 'Grupo A' });
@@ -50,24 +51,27 @@ beforeAll(async () => {
     deudorId: idC, acreedorId: idA, monto: '5.00', fecha: '2026-10-06',
   });
 
-  for (const [nombre, res] of Object.entries({ mov, pres, tarjeta, compra, meta, grupo, pago })) {
+  for (const [nombre, res] of Object.entries({ mov, pres, gastoFijo, meta, grupo, pago })) {
     if (![200, 201].includes(res.status)) throw new Error(`No se pudo crear ${nombre}: ${res.status}`);
   }
   recursos = {
-    movimiento: mov.body, presupuesto: pres.body, tarjeta: tarjeta.body,
-    compra: compra.body, meta: meta.body, grupo: grupo.body, pago: pago.body,
+    movimiento: mov.body, presupuesto: pres.body, gastoFijo: gastoFijo.body,
+    meta: meta.body, grupo: grupo.body, pago: pago.body,
   };
 });
 
 afterAll(async () => {
   const movs = await Movimiento.findAll({ where: { usuarioId: idsUsuarios } });
   await ParticipacionGasto.destroy({ where: { movimientoId: movs.map((m) => m.id) } });
+  await AporteGasto.destroy({ where: { movimientoId: movs.map((m) => m.id) } });
   const metas = await Meta.findAll({ where: { usuarioId: idsUsuarios } });
   await AporteMeta.destroy({ where: { metaId: metas.map((m) => m.id) } });
   await Movimiento.destroy({ where: { usuarioId: idsUsuarios } });
   await Presupuesto.destroy({ where: { usuarioId: idsUsuarios } });
-  await Compra.destroy({ where: { usuarioId: idsUsuarios } });
-  await Tarjeta.destroy({ where: { usuarioId: idsUsuarios } });
+  const gastos = await GastoFijo.findAll({ where: { usuarioId: idsUsuarios } });
+  await CuotaGastoFijo.destroy({ where: { gastoFijoId: gastos.map((g) => g.id) } });
+  await ConceptoGastoFijo.destroy({ where: { gastoFijoId: gastos.map((g) => g.id) } });
+  await GastoFijo.destroy({ where: { usuarioId: idsUsuarios } });
   await Meta.destroy({ where: { usuarioId: idsUsuarios } });
   await Categoria.destroy({ where: { usuarioId: idsUsuarios } });
   if (recursos.grupo) {
@@ -98,24 +102,23 @@ describe('aislamiento entre usuarios: B recibe 404 en los recursos de A', () => 
     expect(lista.body.map((p) => p.id)).not.toContain(id);
   });
 
-  test('tarjeta', async () => {
-    const id = recursos.tarjeta.id;
-    expect((await agentA.get(`/api/tarjetas/${id}/resumen?mes=2026-10`)).status).toBe(200);
-    expect((await agentB.patch(`/api/tarjetas/${id}`).send({ nombre: 'Robada' })).status).toBe(404);
-    expect((await agentB.delete(`/api/tarjetas/${id}`)).status).toBe(404);
-    expect((await agentB.get(`/api/tarjetas/${id}/resumen?mes=2026-10`)).status).toBe(404);
-    expect(await Tarjeta.count({ where: { id } })).toBe(1);
-  });
-
-  test('compra: no se puede cargar ni pagar sobre la tarjeta de A', async () => {
-    const tarjetaId = recursos.tarjeta.id;
-    const res = await agentB.post(`/api/tarjetas/${tarjetaId}/compras`).send({
-      montoTotal: '50.00', cuotas: 1, modalidad: 'compra_completa', fecha: '2026-10-07', descripcion: 'intruso',
+  test('gasto fijo: no se puede leer, editar, borrar ni pagar el de otro usuario', async () => {
+    const id = recursos.gastoFijo.id;
+    const detalle = await agentA.get(`/api/gastos-fijos/${id}?mes=2026-10`);
+    expect(detalle.status).toBe(200);
+    const cuotaId = detalle.body.cuotas[0].id;
+    expect((await agentB.get(`/api/gastos-fijos/${id}`)).status).toBe(404);
+    expect((await agentB.patch(`/api/gastos-fijos/${id}`).send({ nombre: 'Robado' })).status).toBe(404);
+    expect((await agentB.delete(`/api/gastos-fijos/${id}`)).status).toBe(404);
+    const concepto = await agentB.post(`/api/gastos-fijos/${id}/conceptos`).send({
+      nombre: 'Intruso', montoTotal: '10.00', cuotas: 1,
     });
-    expect(res.status).toBe(404);
-    const pago = await agentB.post(`/api/tarjetas/${tarjetaId}/pagos`).send({ monto: '10.00', fecha: '2026-10-08' });
+    expect(concepto.status).toBe(404);
+    const pago = await agentB.post(`/api/gastos-fijos/${id}/cuotas/${cuotaId}/pagar`).send({});
     expect(pago.status).toBe(404);
-    expect(await Compra.count({ where: { tarjetaId } })).toBe(1);
+    expect(await GastoFijo.count({ where: { id } })).toBe(1);
+    expect(await ConceptoGastoFijo.count({ where: { gastoFijoId: id } })).toBe(1);
+    expect(await CuotaGastoFijo.count({ where: { id: cuotaId } })).toBe(1);
   });
 
   test('meta', async () => {

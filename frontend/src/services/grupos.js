@@ -14,6 +14,10 @@ export const crearGastoCompartido = (id, datos) => http.post(`/grupos/${id}/gast
 export const listarGastosCompartidos = (id) => http.get(`/grupos/${id}/gastos?limit=100`)
 export const editarGastoCompartido = (id, gastoId, datos) => http.patch(`/grupos/${id}/gastos/${gastoId}`, datos)
 export const eliminarGastoCompartido = (id, gastoId) => http.delete(`/grupos/${id}/gastos/${gastoId}`)
+export const registrarAporte = (id, gastoId, datos) =>
+  http.post(`/grupos/${id}/gastos/${gastoId}/aportes`, datos)
+export const eliminarAporte = (id, gastoId, aporteId) =>
+  http.delete(`/grupos/${id}/gastos/${gastoId}/aportes/${aporteId}`)
 export const listarSaldos = (id) => http.get(`/grupos/${id}/saldos`)
 export const registrarPago = (id, datos) => http.post(`/grupos/${id}/pagos`, datos)
 export const listarPagos = (id) => http.get(`/grupos/${id}/pagos`)

@@ -1,16 +1,20 @@
 const { aCentavos, deCentavos } = require('../../utils/dinero');
-const { ErrorInterno } = require('../../utils/errores');
 
-// saldo = pagado - participación + pagosRealizados - pagosRecibidos (centavos enteros).
+// saldo = aportes reales - parte teórica + pagos realizados - pagos recibidos.
 // Cada argumento es un objeto { usuarioId: 'monto' }. Devuelve Map<usuarioId, string>.
+// La suma no tiene por qué dar cero: si nadie cubrió el faltante de un gasto,
+// ese faltante queda pendiente y se muestra aparte.
 function calcularSaldos({
+  aportadoPorUsuario,
   pagadoPorUsuario = {},
   participacionPorUsuario = {},
   pagosRealizados = {},
   pagosRecibidos = {},
 }) {
+  // `pagadoPorUsuario` se acepta por compatibilidad con llamadas viejas.
+  const aportes = aportadoPorUsuario ?? pagadoPorUsuario;
   const ids = new Set([
-    ...Object.keys(pagadoPorUsuario),
+    ...Object.keys(aportes),
     ...Object.keys(participacionPorUsuario),
     ...Object.keys(pagosRealizados),
     ...Object.keys(pagosRecibidos),
@@ -18,14 +22,11 @@ function calcularSaldos({
   const c = (obj, id) => (obj[id] === undefined ? 0n : aCentavos(obj[id]));
 
   const saldos = new Map();
-  let total = 0n;
   for (const id of ids) {
     const saldo =
-      c(pagadoPorUsuario, id) - c(participacionPorUsuario, id) + c(pagosRealizados, id) - c(pagosRecibidos, id);
+      c(aportes, id) - c(participacionPorUsuario, id) + c(pagosRealizados, id) - c(pagosRecibidos, id);
     saldos.set(id, saldo);
-    total += saldo;
   }
-  if (total !== 0n) throw new ErrorInterno('Los saldos del grupo no suman cero');
 
   return new Map([...saldos].map(([id, s]) => [id, s < 0n ? `-${deCentavos(-s)}` : deCentavos(s)]));
 }

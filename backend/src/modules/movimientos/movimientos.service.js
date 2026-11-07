@@ -1,9 +1,10 @@
 const { Op } = require('sequelize');
 const { sequelize } = require('../../db/sequelize');
-const { Movimiento, Categoria, AporteMeta } = require('../../db/models');
+const { Movimiento, Categoria, AporteMeta, AporteGasto } = require('../../db/models');
 const metasService = require('../metas/metas.service');
-const { ErrorNoEncontrado, ErrorValidacion } = require('../../utils/errores');
-const { diaValido } = require('../../utils/fechas');
+const { ErrorNoEncontrado, ErrorValidacion, ErrorConflicto } = require('../../utils/errores');
+const { diaValido, hoyBA } = require('../../utils/fechas');
+const { aCentavos, deCentavos } = require('../../utils/dinero');
 
 // La categoría debe ser base o del propio usuario.
 async function verificarCategoria(usuarioId, categoriaId) {
@@ -17,6 +18,9 @@ async function verificarCategoria(usuarioId, categoriaId) {
 async function obtenerPropio(usuarioId, id) {
   const mov = await Movimiento.findOne({ where: { id, usuarioId, alcance: 'personal' } });
   if (!mov) throw new ErrorNoEncontrado('Movimiento no encontrado');
+  if (mov.gastoFijoId) {
+    throw new ErrorConflicto('Este movimiento viene de un gasto fijo. Deshacé el pago desde Gastos fijos.');
+  }
   return mov;
 }
 
@@ -79,11 +83,47 @@ async function listarMovimientos(usuarioId, { mes, categoriaId, tipo, page = 1, 
   return { items: rows, total: count };
 }
 
+// Sequelize devuelve SUM(DECIMAL) como texto; se normaliza a centavos enteros.
+function centavosDeSuma(valor) {
+  if (valor === null || valor === undefined) return 0n;
+  const [entero, decimal = ''] = String(valor).split('.');
+  return BigInt(entero || '0') * 100n + BigInt((decimal + '00').slice(0, 2));
+}
+
+// Mi plata: ingresos personales - gastos personales - aportes reales a gastos compartidos.
+// Los movimientos con fecha futura todavía no afectan el dinero disponible.
+async function dineroActual(usuarioId) {
+  const hoy = hoyBA();
+  const hastaHoy = { [Op.lte]: hoy };
+  const [ingresos, gastosPersonales, gastosCompartidos] = await Promise.all([
+    Movimiento.sum('monto', {
+      where: { usuarioId, alcance: 'personal', tipo: 'ingreso', fecha: hastaHoy },
+    }),
+    Movimiento.sum('monto', {
+      where: { usuarioId, alcance: 'personal', tipo: 'gasto', fecha: hastaHoy },
+    }),
+    AporteGasto.sum('monto', { where: { usuarioId, fecha: hastaHoy } }),
+  ]);
+  const ing = centavosDeSuma(ingresos);
+  const gasPersonales = centavosDeSuma(gastosPersonales);
+  const gasCompartidos = centavosDeSuma(gastosCompartidos);
+  const gastos = gasPersonales + gasCompartidos;
+  return {
+    dineroActual: deCentavos(ing - gastos),
+    ingresos: deCentavos(ing),
+    gastos: deCentavos(gastos),
+    gastosPersonales: deCentavos(gasPersonales),
+    gastosCompartidos: deCentavos(gasCompartidos),
+    fechaCorte: hoy,
+  };
+}
+
 module.exports = {
   crearMovimiento,
   editarMovimiento,
   eliminarMovimiento,
   listarMovimientos,
+  dineroActual,
   rangoDelMes,
   verificarCategoria,
 };

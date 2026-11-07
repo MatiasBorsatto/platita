@@ -11,7 +11,7 @@ const trazos = {
   grafico: ['M4 20V10', 'M10 20V4', 'M16 20v-7', 'M22 20H2'],
   cartera: ['M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H3z', 'M3 7V5a2 2 0 0 1 2-2h11', 'M16 13.5h.01'],
   objetivo: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18', 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8', 'M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2'],
-  tarjeta: ['M3 6h18v12H3z', 'M3 10h18', 'M7 15h4']
+  tarjeta: ['M6 3h12v18l-3-2-3 2-3-2-3 2z', 'M9 8h6', 'M9 12h6']
 }
 
 // Posición en porcentaje del área de contenido, tamaño en px y velocidad de flotación.

@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Movimiento, MiembroGrupo, ParticipacionGasto, PagoEntreMiembros } = require('../../db/models');
+const { Movimiento, MiembroGrupo, ParticipacionGasto, PagoEntreMiembros, AporteGasto } = require('../../db/models');
 const { aCentavos, deCentavos } = require('../../utils/dinero');
 const { ErrorProhibido } = require('../../utils/errores');
 const { rangoDelMes } = require('../movimientos/movimientos.service');
@@ -38,10 +38,13 @@ async function saldosHistoricos(usuarioId, grupoId, desde, hasta) {
   const miembros = await MiembroGrupo.findAll({ where: { grupoId }, order: [['createdAt', 'ASC'], ['id', 'ASC']] });
   const movs = await Movimiento.findAll({
     where: { grupoId, alcance: 'compartido', tipo: 'gasto' },
-    attributes: ['id', 'pagadorId', 'monto', 'fecha'],
+    attributes: ['id', 'monto', 'fecha'],
   });
   const participaciones = movs.length
     ? await ParticipacionGasto.findAll({ where: { movimientoId: movs.map((m) => m.id) } })
+    : [];
+  const aportes = movs.length
+    ? await AporteGasto.findAll({ where: { movimientoId: movs.map((m) => m.id) } })
     : [];
   const fechaDe = new Map(movs.map((m) => [m.id, m.fecha]));
   const pagos = await PagoEntreMiembros.findAll({ where: { grupoId } });
@@ -49,11 +52,11 @@ async function saldosHistoricos(usuarioId, grupoId, desde, hasta) {
   return meses.map((mes) => {
     const fin = rangoDelMes(mes)[1];
     const hastaFin = (fecha) => fecha <= fin;
-    const movsMes = movs.filter((m) => hastaFin(m.fecha));
     const partesMes = participaciones.filter((p) => hastaFin(fechaDe.get(p.movimientoId)));
+    const aportesMes = aportes.filter((a) => hastaFin(a.fecha));
     const pagosMes = pagos.filter((p) => hastaFin(p.fecha));
     const saldos = calcularSaldos({
-      pagadoPorUsuario: sumarPor(movsMes.filter((m) => m.pagadorId), (m) => m.pagadorId),
+      aportadoPorUsuario: sumarPor(aportesMes, (a) => a.usuarioId),
       participacionPorUsuario: sumarPor(partesMes, (p) => p.usuarioId),
       pagosRealizados: sumarPor(pagosMes, (p) => p.deudorId),
       pagosRecibidos: sumarPor(pagosMes, (p) => p.acreedorId),

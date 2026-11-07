@@ -2,7 +2,7 @@ const request = require('supertest');
 const { createApp } = require('../src/app');
 const { sequelize } = require('../src/db/sequelize');
 const {
-  Usuario, Grupo, MiembroGrupo, Categoria, Movimiento, ParticipacionGasto, Meta, AporteMeta, Presupuesto, Tarjeta, Notificacion,
+  Usuario, Grupo, MiembroGrupo, Categoria, Movimiento, ParticipacionGasto, AporteGasto, Meta, AporteMeta, Presupuesto, Notificacion,
 } = require('../src/db/models');
 const { calcularResumen } = require('../src/modules/estadisticas/resumenMensual.calculo');
 
@@ -91,11 +91,11 @@ afterAll(async () => {
   const metas = await Meta.findAll({ where: { usuarioId: usuarios } });
   await AporteMeta.destroy({ where: { metaId: metas.map((m) => m.id) } });
   await ParticipacionGasto.destroy({ where: { movimientoId: movs.map((m) => m.id) } });
+  await AporteGasto.destroy({ where: { movimientoId: movs.map((m) => m.id) } });
   await Movimiento.destroy({ where: { usuarioId: usuarios } });
   await Meta.destroy({ where: { usuarioId: usuarios } });
   await Notificacion.destroy({ where: { usuarioId: usuarios } });
   await Presupuesto.destroy({ where: { usuarioId: usuarios } });
-  await Tarjeta.destroy({ where: { usuarioId: usuarios } });
   await MiembroGrupo.destroy({ where: { grupoId } });
   await Grupo.destroy({ where: { id: grupoId } });
   await Categoria.destroy({ where: { usuarioId: usuarios } });
@@ -118,7 +118,7 @@ test('mes vacío devuelve ceros', async () => {
   });
 });
 
-test('integra personales, parte compartida propia, pago_tarjeta, aportes y presupuestos', async () => {
+test('integra personales, parte compartida propia, aportes y presupuestos', async () => {
   await mov(agentA, { tipo: 'ingreso', monto: '1000.00', fecha: '2026-10-01' });
   await mov(agentA, { tipo: 'gasto', monto: '100.00', fecha: '2026-10-02', categoriaId: catComida });
   await mov(agentA, { tipo: 'gasto', monto: '20.00', fecha: '2026-10-03' });
@@ -129,8 +129,6 @@ test('integra personales, parte compartida propia, pago_tarjeta, aportes y presu
   // B crea y paga un compartido de 30.00: A participa con 15.00.
   const comp2 = await agentB.post(`/api/grupos/${grupoId}/gastos`).send({ pagadorId: ids.b, categoriaId: catBruno, monto: '30.00', fecha: '2026-10-05' });
   expect(comp2.status).toBe(201);
-  const tarjeta = await Tarjeta.create({ usuarioId: ids.a, nombre: 'Visa', diaCierre: 20, diaVencimiento: 5 });
-  await agentA.post(`/api/tarjetas/${tarjeta.id}/pagos`).send({ monto: '500.00', fecha: '2026-10-21' });
   const meta = (await agentA.post('/api/metas').send({ nombre: 'Viaje', montoObjetivo: '5000.00' })).body;
   await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '300.00', fecha: '2026-10-10' });
   await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '70.00', fecha: '2026-09-10' });

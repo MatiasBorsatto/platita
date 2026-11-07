@@ -17,6 +17,9 @@ function fechaLegible(fecha) {
 function signo(m) {
   return m.tipo === 'ingreso' ? '+' : '-'
 }
+function esFijo(m) {
+  return !!m.gastoFijoId
+}
 </script>
 
 <template>
@@ -30,12 +33,16 @@ function signo(m) {
         <tbody>
           <tr v-for="m in movimientos" :key="m.id">
             <td>{{ fechaLegible(m.fecha) }}</td>
-            <td>{{ m.descripcion || '—' }}</td>
+            <td>
+              {{ m.descripcion || '—' }}
+              <span v-if="esFijo(m)" class="etiqueta">Gasto fijo</span>
+            </td>
             <td>{{ nombreCategoria(m.categoriaId) }}</td>
             <td class="num" :class="m.tipo">{{ signo(m) }}{{ formatearMonto(m.monto) }}</td>
             <td class="acciones">
-              <button type="button" @click="emit('editar', m)">Editar</button>
-              <button type="button" @click="emit('eliminar', m)">Eliminar</button>
+              <button v-if="!esFijo(m)" type="button" @click="emit('editar', m)">Editar</button>
+              <button v-if="!esFijo(m)" type="button" @click="emit('eliminar', m)">Eliminar</button>
+              <span v-else class="suave">Gestionado desde Gastos fijos</span>
             </td>
           </tr>
         </tbody>
@@ -44,11 +51,15 @@ function signo(m) {
     <ul class="tarjetas">
       <li v-for="m in movimientos" :key="m.id" class="tarjeta">
         <div class="fila"><span>{{ fechaLegible(m.fecha) }}</span><strong :class="m.tipo">{{ signo(m) }}{{ formatearMonto(m.monto) }}</strong></div>
-        <div>{{ m.descripcion || '—' }}</div>
+        <div>
+          {{ m.descripcion || '—' }}
+          <span v-if="esFijo(m)" class="etiqueta">Gasto fijo</span>
+        </div>
         <div class="suave">{{ nombreCategoria(m.categoriaId) }}</div>
         <div class="acciones">
-          <button type="button" @click="emit('editar', m)">Editar</button>
-          <button type="button" @click="emit('eliminar', m)">Eliminar</button>
+          <button v-if="!esFijo(m)" type="button" @click="emit('editar', m)">Editar</button>
+          <button v-if="!esFijo(m)" type="button" @click="emit('eliminar', m)">Eliminar</button>
+          <span v-else class="suave">Gestionado desde Gastos fijos</span>
         </div>
       </li>
     </ul>
@@ -62,8 +73,9 @@ function signo(m) {
 .num { text-align: right !important; white-space: nowrap; }
 .gasto { color: var(--error); }
 .ingreso { color: var(--primario); }
-.acciones { display: flex; gap: 8px; }
+.acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 button { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--borde); background: var(--superficie); color: var(--texto); cursor: pointer; }
+.etiqueta { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; border: 1px solid var(--borde); color: var(--texto-suave); }
 .tarjetas { display: none; list-style: none; margin: 0; padding: 0; gap: 10px; }
 .tarjeta { padding: 14px; background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio-chico); box-shadow: var(--sombra); display: grid; gap: 6px; overflow-wrap: anywhere; }
 .fila { display: flex; justify-content: space-between; gap: 8px; }

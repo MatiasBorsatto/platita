@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { listarNotificaciones, marcarLeida } from '../services/notificaciones.js'
 import { abrirPanel, cerrarPanel } from '../motion/movimiento.js'
 
@@ -14,6 +14,7 @@ const noLeidas = computed(() => notificaciones.value.filter((n) => !n.leida).len
 async function cargar() {
   try {
     notificaciones.value = await listarNotificaciones()
+    error.value = ''
   } catch {
     error.value = 'No pudimos cargar las notificaciones.'
   }
@@ -27,6 +28,19 @@ async function marcar(n) {
     error.value = 'No pudimos marcar la notificación como leída.'
   }
 }
+
+function refrescar() {
+  cargar()
+}
+
+onMounted(() => {
+  cargar()
+  window.addEventListener('notificaciones:cambio', refrescar)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('notificaciones:cambio', refrescar)
+})
 
 // El panel se muestra fijo, junto al botón, para no tapar el contenido. En celular queda sobre la barra inferior.
 function alternar() {
@@ -70,8 +84,9 @@ onMounted(cargar)
         <p v-if="error" class="error" role="alert">{{ error }}</p>
         <p v-if="notificaciones.length === 0" class="vacio">No tenés notificaciones.</p>
         <ul v-else>
-          <li v-for="n in notificaciones" :key="n.id" :class="{ leida: n.leida }">
+          <li v-for="n in notificaciones" :key="n.id" :class="{ leida: n.leida, vencimiento: n.tipo === 'vencimiento' }">
             <span>{{ n.mensaje }}</span>
+            <small v-if="n.tipo" class="tipo">{{ n.tipo === 'vencimiento' ? 'Vencimiento' : 'Presupuesto' }}</small>
             <button v-if="!n.leida" type="button" :data-testid="`marcar-${n.id}`" @click="marcar(n)">
               Marcar como leída
             </button>
@@ -110,6 +125,8 @@ onMounted(cargar)
 ul { list-style: none; margin: 0; padding: 0; }
 li { display: flex; flex-direction: column; gap: 4px; padding: 8px; border-bottom: 1px solid var(--borde); }
 li.leida { color: var(--texto-suave); }
+li.vencimiento { border-left: 3px solid var(--acento); padding-left: 7px; }
+.tipo { color: var(--texto-suave); font-size: 0.78rem; }
 .vacio, .error { margin: 0; padding: 8px; }
 .solo-movil { display: none; }
 @media (max-width: 767px) { .solo-movil { display: flex; } }

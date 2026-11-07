@@ -2,7 +2,6 @@ const request = require('supertest');
 const { createApp } = require('../src/app');
 const { sequelize } = require('../src/db/sequelize');
 const { calcularSaldos } = require('../src/modules/saldos/saldos.calculo');
-const { ErrorInterno } = require('../src/utils/errores');
 const {
   Usuario, Grupo, MiembroGrupo, Movimiento, ParticipacionGasto, PagoEntreMiembros,
 } = require('../src/db/models');
@@ -30,15 +29,15 @@ describe('calcularSaldos (puro)', () => {
     expect(s.get('B')).toBe('0.00');
   });
 
-  test('suma de saldos distinta de cero lanza ErrorInterno', () => {
-    expect(() =>
-      calcularSaldos({
-        pagadoPorUsuario: { A: '100.00' },
-        participacionPorUsuario: { A: '50.00', B: '40.00' },
-        pagosRealizados: {},
-        pagosRecibidos: {},
-      })
-    ).toThrow(ErrorInterno);
+  test('si falta cubrir parte del gasto, la suma no da cero y no lanza error', () => {
+    const s = calcularSaldos({
+      aportadoPorUsuario: { A: '100.00' },
+      participacionPorUsuario: { A: '50.00', B: '40.00' },
+      pagosRealizados: {},
+      pagosRecibidos: {},
+    });
+    expect(s.get('A')).toBe('50.00');
+    expect(s.get('B')).toBe('-40.00');
   });
 
   test('es exacto en centavos (33.34 + 33.33 + 33.33)', () => {

@@ -6,7 +6,7 @@ const categoriasRoutes = require('./modules/categorias/categorias.routes');
 const movimientosRoutes = require('./modules/movimientos/movimientos.routes');
 const presupuestosRoutes = require('./modules/presupuestos/presupuestos.routes');
 const notificacionesRoutes = require('./modules/notificaciones/notificaciones.routes');
-const tarjetasRoutes = require('./modules/tarjetas/tarjetas.routes');
+const gastosFijosRoutes = require('./modules/gastos-fijos/gastos-fijos.routes');
 const metasRoutes = require('./modules/metas/metas.routes');
 const gruposRoutes = require('./modules/grupos/grupos.routes');
 const saldosRoutes = require('./modules/saldos/saldos.routes');
@@ -29,7 +29,7 @@ function createApp() {
   app.use('/api/movimientos', movimientosRoutes);
   app.use('/api/presupuestos', presupuestosRoutes);
   app.use('/api/notificaciones', notificacionesRoutes);
-  app.use('/api/tarjetas', tarjetasRoutes);
+  app.use('/api/gastos-fijos', gastosFijosRoutes);
   app.use('/api/metas', metasRoutes);
   app.use('/api/grupos', gruposRoutes);
   app.use('/api/grupos', saldosRoutes);

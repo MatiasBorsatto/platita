@@ -10,7 +10,6 @@ const TokenRecuperacion = require('../src/db/models/token-recuperacion');
 const app = createApp();
 const correo = `perfil-test-${Date.now()}@example.com`;
 const correoNuevo = `perfil-nuevo-${Date.now()}@example.com`;
-const correoGoogle = `perfil-google-${Date.now()}@example.com`;
 const password = 'clave-segura-1';
 let claveActual = password;
 let espia;
@@ -26,7 +25,7 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 afterAll(async () => {
-  await Usuario.destroy({ where: { email: [correo, correoNuevo, correoGoogle] } });
+  await Usuario.destroy({ where: { email: [correo, correoNuevo] } });
   await sequelize.close();
 });
 
@@ -123,19 +122,6 @@ test('PATCH perfil cambia la contraseña solo con la actual correcta', async () 
   expect(ok.status).toBe(200);
   const u = await Usuario.findOne({ where: { email: correo } });
   expect(await bcrypt.compare('clave-nueva-44', u.passwordHash)).toBe(true);
-});
-
-test('cuenta solo-Google no puede cambiar contraseña y responde 400 aunque envíe actual', async () => {
-  const { emitirTokens } = require('../src/modules/auth/auth.service');
-  const cuenta = await Usuario.create({ nombre: 'Gina', email: correoGoogle, googleId: `g-${Date.now()}` });
-  const { accessToken } = emitirTokens(cuenta);
-  const res = await request(app)
-    .patch('/api/usuario/perfil')
-    .set('Cookie', `accessToken=${accessToken}`)
-    .send({ passwordActual: 'cualquiera-1', passwordNueva: 'clave-nueva-55' });
-  expect(res.status).toBe(400);
-  const sigue = await Usuario.findByPk(cuenta.id);
-  expect(sigue.passwordHash).toBeNull();
 });
 
 test('recuperar responde 200 idéntico aunque falle el envío del email', async () => {

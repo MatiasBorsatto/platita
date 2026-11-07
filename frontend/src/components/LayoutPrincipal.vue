@@ -14,7 +14,7 @@ const logoUrl = '/logo.svg'
 const iconos = {
   movimientos: ['M7 17 17 7', 'M9 7h8v8'],
   presupuestos: ['M21 12A9 9 0 1 1 12 3v9h9'],
-  tarjetas: ['M3 6h18v12H3z', 'M3 10h18', 'M7 15h4'],
+  gastosFijos: ['M6 3h12v18l-3-2-3 2-3-2-3 2z', 'M9 8h6', 'M9 12h6'],
   metas: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18', 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8', 'M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2'],
   grupos: ['M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8', 'M2 21a7 7 0 0 1 14 0', 'M16 3.1a4 4 0 0 1 0 7.8', 'M22 21a7 7 0 0 0-5-6.7'],
   estadisticas: ['M4 20V10', 'M10 20V4', 'M16 20v-7', 'M2 20h20'],
@@ -25,7 +25,7 @@ const iconos = {
 const enlaces = [
   { to: '/movimientos', texto: 'Movimientos', icono: 'movimientos' },
   { to: '/presupuestos', texto: 'Presupuestos', icono: 'presupuestos' },
-  { to: '/tarjetas', texto: 'Tarjetas', icono: 'tarjetas' },
+  { to: '/gastos-fijos', texto: 'Gastos fijos', icono: 'gastosFijos' },
   { to: '/metas', texto: 'Metas', icono: 'metas' },
   { to: '/grupos', texto: 'Grupos', icono: 'grupos' },
   { to: '/estadisticas', texto: 'Estadísticas', icono: 'estadisticas' }
