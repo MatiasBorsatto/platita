@@ -104,7 +104,8 @@ describe('aislamiento entre usuarios: B recibe 404 en los recursos de A', () => 
 
   test('gasto fijo: no se puede leer, editar, borrar ni pagar el de otro usuario', async () => {
     const id = recursos.gastoFijo.id;
-    const detalle = await agentA.get(`/api/gastos-fijos/${id}?mes=2026-10`);
+    const mesActual = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 7);
+    const detalle = await agentA.get(`/api/gastos-fijos/${id}?mes=${mesActual}`);
     expect(detalle.status).toBe(200);
     const cuotaId = detalle.body.cuotas[0].id;
     expect((await agentB.get(`/api/gastos-fijos/${id}`)).status).toBe(404);
