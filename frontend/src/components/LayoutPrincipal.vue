@@ -18,6 +18,7 @@ const iconos = {
   metas: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18', 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8', 'M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2'],
   grupos: ['M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8', 'M2 21a7 7 0 0 1 14 0', 'M16 3.1a4 4 0 0 1 0 7.8', 'M22 21a7 7 0 0 0-5-6.7'],
   estadisticas: ['M4 20V10', 'M10 20V4', 'M16 20v-7', 'M2 20h20'],
+  control_parental: ['M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z', 'M9 12l2 2 4-4'],
   deudas: ['M3 7h18v10H3z', 'M7 12h.01', 'M17 12h.01', 'M12 7v10'],
   perfil: ['M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8', 'M4 21a8 8 0 0 1 16 0'],
   salir: ['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4', 'M16 17l5-5-5-5', 'M21 12H9']
@@ -30,7 +31,8 @@ const enlaces = [
   { to: '/metas', texto: 'Metas', icono: 'metas' },
   { to: '/grupos', texto: 'Grupos', icono: 'grupos' },
   { to: '/estadisticas', texto: 'Estadísticas', icono: 'estadisticas' },
-  { to: '/deudas', texto: 'Deudas', icono: 'deudas' }
+  { to: '/deudas', texto: 'Deudas', icono: 'deudas' },
+  { to: '/control-parental', texto: 'Control parental', icono: 'control_parental' }
 ]
 
 async function salir() {

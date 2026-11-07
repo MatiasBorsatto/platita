@@ -3,12 +3,13 @@ const { autenticar } = require('../../middlewares/autenticar');
 const { validarUuid } = require('../movimientos/movimientos.validation');
 const { validarCrear, validarEditar, validarAporte } = require('./metas.validation');
 const service = require('./metas.service');
+const { paginar } = require('../../utils/paginacion');
 
 const router = Router();
 router.use(autenticar);
 
 router.get('/', async (req, res) => {
-  res.json(await service.listarMetas(req.usuario.id));
+  res.json(paginar(await service.listarMetas(req.usuario.id), req.query));
 });
 
 router.post('/', async (req, res) => {

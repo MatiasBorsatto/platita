@@ -1,4 +1,6 @@
 <script setup>
+import { TIPOS_PAGO, MONEDAS, esTarjeta, errorDelFormulario, payloadDelFormulario } from '../utils/gastoFijo.js'
+import { listarGrupos } from '../services/grupos.js'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CargandoIndicador from '../components/CargandoIndicador.vue'
@@ -17,6 +19,15 @@ const mostrarFormulario = ref(false)
 const nombre = ref('')
 const diaVencimiento = ref('')
 const categoriaId = ref('')
+const tipoPago = ref('simple')
+const moneda = ref('ARS')
+const ambito = ref('propio')
+const grupoId = ref('')
+const grupos = ref([])
+const ultimosCuatro = ref('')
+const banco = ref('')
+const titular = ref('')
+const alias = ref('')
 
 const nombreCategoria = (id) => categorias.value.find((c) => c.id === id)?.nombre ?? 'Sin categoría'
 const diaValido = (v) => /^\d+$/.test(String(v).trim()) && Number(v) >= 1 && Number(v) <= 31
@@ -43,10 +54,11 @@ async function cargar() {
   }
 }
 
-function abrirFormulario() {
+async function abrirFormulario() {
   mostrarFormulario.value = true
   error.value = ''
   aviso.value = ''
+  if (!grupos.value.length) grupos.value = await listarGrupos().catch(() => [])
 }
 
 function cerrarFormulario() {
@@ -54,24 +66,26 @@ function cerrarFormulario() {
   nombre.value = ''
   diaVencimiento.value = ''
   categoriaId.value = ''
+  tipoPago.value = 'simple'
+  moneda.value = 'ARS'
+  ambito.value = 'propio'
+  grupoId.value = ''
+  ultimosCuatro.value = ''
+  banco.value = ''
+  titular.value = ''
+  alias.value = ''
 }
 
 async function crear() {
-  if (!nombre.value.trim()) {
-    error.value = 'Ingresá el nombre del gasto fijo.'
-    return
+  const form = {
+    nombre: nombre.value, diaVencimiento: diaVencimiento.value, categoriaId: categoriaId.value,
+    tipoPago: tipoPago.value, moneda: moneda.value, ambito: ambito.value, grupoId: grupoId.value,
+    ultimosCuatro: ultimosCuatro.value, banco: banco.value, titular: titular.value, alias: alias.value
   }
-  if (!diaValido(diaVencimiento.value)) {
-    error.value = 'El día de vencimiento debe estar entre 1 y 31.'
-    return
-  }
-  error.value = ''
+  error.value = errorDelFormulario(form) ?? ''
+  if (error.value) return
   try {
-    const gasto = await crearGastoFijo({
-      nombre: nombre.value.trim(),
-      diaVencimiento: Number(diaVencimiento.value),
-      categoriaId: categoriaId.value || null
-    })
+    const gasto = await crearGastoFijo(payloadDelFormulario(form))
     cerrarFormulario()
     await router.push(`/gastos-fijos/${gasto.id}`)
   } catch (e) {
@@ -131,6 +145,51 @@ onMounted(async () => {
           <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nombre }}</option>
         </select>
       </label>
+      <fieldset class="grupo-campos">
+        <legend>Tipo de gasto</legend>
+        <label>Cómo se paga
+          <select v-model="tipoPago" name="tipoPago">
+            <option v-for="t in TIPOS_PAGO" :key="t.valor" :value="t.valor">{{ t.texto }}</option>
+          </select>
+        </label>
+        <label v-if="esTarjeta(tipoPago)" class="aviso-privacidad">
+          Solo los últimos cuatro dígitos. Nunca cargues el número completo ni el código de seguridad.
+        </label>
+        <template v-if="esTarjeta(tipoPago)">
+          <label>Últimos cuatro dígitos
+            <input v-model="ultimosCuatro" name="ultimosCuatro" type="text" inputmode="numeric" maxlength="4" autocomplete="off" />
+          </label>
+          <label>Banco o entidad
+            <input v-model="banco" name="banco" type="text" maxlength="60" />
+          </label>
+          <label>Titular
+            <input v-model="titular" name="titular" type="text" maxlength="100" />
+          </label>
+          <label>Alias (opcional)
+            <input v-model="alias" name="alias" type="text" maxlength="60" placeholder="Tarjeta principal" />
+          </label>
+        </template>
+        <label>Moneda
+          <select v-model="moneda" name="moneda">
+            <option v-for="m in MONEDAS" :key="m" :value="m">{{ m }}</option>
+          </select>
+        </label>
+      </fieldset>
+      <fieldset class="grupo-campos">
+        <legend>De quién es</legend>
+        <label>Ámbito
+          <select v-model="ambito" name="ambito">
+            <option value="propio">Propio (solo yo)</option>
+            <option value="grupo">Del grupo familiar</option>
+          </select>
+        </label>
+        <label v-if="ambito === grupo">Grupo
+          <select v-model="grupoId" name="grupoId">
+            <option value="">Elegí un grupo</option>
+            <option v-for="g in grupos" :key="g.id" :value="g.id">{{ g.nombre }}</option>
+          </select>
+        </label>
+      </fieldset>
       <div class="acciones">
         <button type="submit" class="primario">Crear y agregar conceptos</button>
         <button type="button" @click="cerrarFormulario">Cancelar</button>

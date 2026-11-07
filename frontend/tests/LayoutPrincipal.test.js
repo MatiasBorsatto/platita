@@ -12,7 +12,7 @@ describe('LayoutPrincipal', () => {
       global: { stubs: { RouterLink: { props: ['to'], template: '<a :href="to"><slot /></a>' }, RouterView: true } }
     })
     const textos = w.findAll('a').map((a) => a.text())
-    expect(textos).toEqual(['Movimientos', 'Presupuestos', 'Gastos fijos', 'Metas', 'Grupos', 'Estadísticas', 'Deudas', 'Perfil'])
+    expect(textos).toEqual(['Movimientos', 'Presupuestos', 'Gastos fijos', 'Metas', 'Grupos', 'Estadísticas', 'Deudas', 'Control parental', 'Perfil'])
     expect(w.text()).toContain('Salir')
   })
 })

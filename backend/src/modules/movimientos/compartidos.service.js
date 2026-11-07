@@ -3,7 +3,7 @@ const { Movimiento, Categoria, MiembroGrupo, ParticipacionGasto, AporteGasto } =
 const { dividirEnPartes, sumar, aCentavos, deCentavos } = require('../../utils/dinero');
 const { hoyBA } = require('../../utils/fechas');
 const { ErrorValidacion, ErrorNoEncontrado, ErrorProhibido } = require('../../utils/errores');
-const { verificarCategoria } = require('./movimientos.service');
+const { verificarCategoria, verificarCategoriasDe } = require('./movimientos.service');
 
 function itemAportes(aportes) {
   return (aportes || []).map((a) => ({
@@ -109,7 +109,7 @@ async function crearGastoCompartido(
   // si no, queda en null y el participante la elige después.
   const catGasto = categoriaId ? await Categoria.findByPk(categoriaId) : null;
   const heredada = (uid) => (catGasto && (catGasto.usuarioId === null || catGasto.usuarioId === uid) ? categoriaId : null);
-  for (const p of partes) await verificarCategoria(p.usuarioId, p.categoriaId);
+  await verificarCategoriasDe(partes);
 
   const listaAportes = aportes ?? aportesPorDefecto(usuarioId, pagadorId, monto, partes);
   await verificarAportantes(grupoId, listaAportes);
@@ -194,7 +194,7 @@ async function editarGastoCompartido(usuarioId, grupoId, movimientoId, datos) {
   const catGasto = nuevo.categoriaId ? await Categoria.findByPk(nuevo.categoriaId) : null;
   const heredada = (uid) =>
     catGasto && (catGasto.usuarioId === null || catGasto.usuarioId === uid) ? nuevo.categoriaId : null;
-  for (const p of partes) await verificarCategoria(p.usuarioId, p.categoriaId);
+  await verificarCategoriasDe(partes);
 
   // Un único aporte por el total era el "pagador histórico". Si se corrige el
   // total o el pagador, ese aporte acompaña el cambio. Los aportes parciales

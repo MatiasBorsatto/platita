@@ -15,6 +15,26 @@ async function verificarCategoria(usuarioId, categoriaId) {
   if (!cat) throw new ErrorValidacion('Categoría inválida');
 }
 
+// Valida las categorías de varios participantes con una sola consulta. Cada uno solo puede usar
+// sus propias categorías o las base.
+async function verificarCategoriasDe(pares) {
+  const pedidas = pares.filter((p) => p.categoriaId);
+  if (pedidas.length === 0) return;
+  const cats = await Categoria.findAll({
+    where: {
+      id: [...new Set(pedidas.map((p) => p.categoriaId))],
+      [Op.or]: [{ usuarioId: [...new Set(pedidas.map((p) => p.usuarioId))] }, { usuarioId: null }],
+    },
+    attributes: ['id', 'usuarioId'],
+  });
+  const validas = new Set(cats.map((c) => `${c.id}|${c.usuarioId ?? ''}`));
+  for (const p of pedidas) {
+    if (!validas.has(`${p.categoriaId}|${p.usuarioId}`) && !validas.has(`${p.categoriaId}|`)) {
+      throw new ErrorValidacion('Categoría inválida');
+    }
+  }
+}
+
 async function obtenerPropio(usuarioId, id) {
   const mov = await Movimiento.findOne({ where: { id, usuarioId, alcance: 'personal' } });
   if (!mov) throw new ErrorNoEncontrado('Movimiento no encontrado');
@@ -119,6 +139,7 @@ async function dineroActual(usuarioId) {
 }
 
 module.exports = {
+  verificarCategoriasDe,
   crearMovimiento,
   editarMovimiento,
   eliminarMovimiento,

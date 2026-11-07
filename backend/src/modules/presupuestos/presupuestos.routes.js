@@ -30,6 +30,10 @@ router.put('/', async (req, res) => {
     montoLimite: validarMonto(b.montoLimite),
   };
   if (b.regla !== undefined) datos.regla = b.regla;
+  if (b.moneda !== undefined) {
+    if (typeof b.moneda !== 'string' || !/^[A-Z]{3}$/.test(b.moneda)) throw new ErrorValidacion('La moneda debe ser un código de 3 letras (por ejemplo ARS)');
+    datos.moneda = b.moneda;
+  }
   res.json(await service.upsertPresupuesto(req.usuario.id, datos));
 });
 

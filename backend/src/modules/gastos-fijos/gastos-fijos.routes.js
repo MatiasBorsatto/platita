@@ -5,6 +5,7 @@ const { validarUuid, validarMes } = require('../movimientos/movimientos.validati
 const { hoyBA } = require('../../utils/fechas');
 const { validarGastoFijo, validarConcepto, validarPago } = require('./gastos-fijos.validation');
 const service = require('./gastos-fijos.service');
+const { paginar } = require('../../utils/paginacion');
 const { exigir, clasificacionDe } = require('../autorizacion/autorizacion.service');
 const { PERMISOS } = require('../autorizacion/permisos');
 const { GastoFijo, MiembroGrupo } = require('../../db/models');
@@ -64,7 +65,8 @@ router.param('cuotaId', (req, res, next, valor) => {
 const mesDeQuery = (query) => (query.mes === undefined ? hoyBA().slice(0, 7) : validarMes(query.mes));
 
 router.get('/', async (req, res) => {
-  res.json(await respuestaSegunClase(req.usuario.id, await service.listarGastosFijos(req.usuario.id)));
+  const lista = await respuestaSegunClase(req.usuario.id, await service.listarGastosFijos(req.usuario.id));
+  res.json(paginar(lista, req.query));
 });
 
 router.post('/', async (req, res) => {
