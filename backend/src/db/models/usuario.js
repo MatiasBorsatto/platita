@@ -9,6 +9,7 @@ const Usuario = sequelize.define(
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     passwordHash: { type: DataTypes.STRING, allowNull: false },
     preferenciasEmail: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    fechaNacimiento: { type: DataTypes.DATEONLY, allowNull: true },
   },
   { tableName: 'usuarios' }
 );

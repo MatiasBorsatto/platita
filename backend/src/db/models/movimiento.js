@@ -10,6 +10,7 @@ const Movimiento = sequelize.define(
     alcance: { type: DataTypes.STRING(10), allowNull: false, defaultValue: 'personal' },
     // DECIMAL llega como string desde pg: nunca se convierte a float.
     monto: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+    moneda: { type: DataTypes.CHAR(3), allowNull: false, defaultValue: 'ARS' },
     fecha: { type: DataTypes.DATEONLY, allowNull: false },
     descripcion: { type: DataTypes.STRING(255), allowNull: true },
     categoriaId: { type: DataTypes.UUID, allowNull: true },

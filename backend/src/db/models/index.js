@@ -14,6 +14,9 @@ const GastoFijo = require('./gasto-fijo');
 const ConceptoGastoFijo = require('./concepto-gasto-fijo');
 const CuotaGastoFijo = require('./cuota-gasto-fijo');
 const AporteGasto = require('./aporte-gasto');
+const VinculoTutor = require('./vinculo-tutor');
+const PermisoMenor = require('./permiso-menor');
+const RegistroAuditoria = require('./registro-auditoria');
 
 Usuario.hasMany(Categoria, { foreignKey: 'usuarioId' });
 Categoria.belongsTo(Usuario, { foreignKey: 'usuarioId' });

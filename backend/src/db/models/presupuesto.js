@@ -9,6 +9,7 @@ const Presupuesto = sequelize.define(
     categoriaId: { type: DataTypes.UUID, allowNull: false },
     mes: { type: DataTypes.STRING(7), allowNull: false },
     // DECIMAL llega como string desde pg: nunca se convierte a float.
+    moneda: { type: DataTypes.CHAR(3), allowNull: false, defaultValue: 'ARS' },
     montoLimite: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     regla: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'solo_personal' },
   },
