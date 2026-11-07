@@ -2,9 +2,9 @@
 import CampoMonto from '../components/CampoMonto.vue'
 import { confirmar } from '../services/dialogo.js'
 import CargandoIndicador from '../components/CargandoIndicador.vue'
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import BarraMeta from '../components/BarraMeta.vue'
-import { listarMetas, crearMeta, eliminarMeta, registrarAporte } from '../services/metas.js'
+import { listarMetasPagina, crearMeta, eliminarMeta, registrarAporte } from '../services/metas.js'
 import { normalizarMonto, hoyLocal } from '../utils/formato.js'
 
 const hoy = hoyLocal()
@@ -20,15 +20,32 @@ const fechaLimite = ref('')
 const aportes = ref({})
 const formAporte = (id) => (aportes.value[id] ??= { tipo: 'aporte', monto: '', fecha: hoy })
 
+const pagina = ref(1)
+const total = ref(0)
+const hayMas = computed(() => metas.value.length < total.value)
+
 async function cargar() {
   cargando.value = true
   error.value = ''
+  pagina.value = 1
   try {
-    metas.value = await listarMetas()
+    const datos = await listarMetasPagina(1)
+    metas.value = datos.items
+    total.value = datos.total
   } catch (e) {
     error.value = e.mensaje || 'No se pudieron cargar las metas.'
   } finally {
     cargando.value = false
+  }
+}
+
+async function cargarMas() {
+  pagina.value += 1
+  try {
+    const datos = await listarMetasPagina(pagina.value)
+    metas.value = [...metas.value, ...datos.items]
+  } catch (e) {
+    error.value = e.mensaje || 'No se pudieron cargar más metas.'
   }
 }
 
@@ -132,6 +149,7 @@ onMounted(cargar)
         </form>
       </li>
     </ul>
+    <button v-if="hayMas" type="button" class="cargar-mas" @click="cargarMas">Cargar más metas</button>
   </section>
 </template>
 

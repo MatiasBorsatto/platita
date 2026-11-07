@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 
 vi.mock('../src/services/metas.js', () => ({
   listarMetas: vi.fn(),
+  listarMetasPagina: vi.fn(),
   crearMeta: vi.fn(),
   eliminarMeta: vi.fn(),
   registrarAporte: vi.fn()
@@ -18,7 +19,7 @@ const meta = {
 describe('MetasView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    api.listarMetas.mockResolvedValue([meta])
+    api.listarMetasPagina.mockResolvedValue({ items: [meta], total: 1, pagina: 1, limite: 20 })
   })
 
   it('muestra porcentaje y restante de la API', async () => {

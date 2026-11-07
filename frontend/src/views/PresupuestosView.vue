@@ -1,4 +1,5 @@
 <script setup>
+import { MONEDAS } from '../utils/gastoFijo.js'
 import CampoMonto from '../components/CampoMonto.vue'
 import { confirmar } from '../services/dialogo.js'
 import CargandoIndicador from '../components/CargandoIndicador.vue'
@@ -13,6 +14,7 @@ const mes = ref(`${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(
 const estados = ref([])
 const categorias = ref([])
 const categoriaId = ref('')
+const moneda = ref('ARS')
 const monto = ref('')
 const cargando = ref(false)
 const error = ref('')
@@ -44,7 +46,7 @@ async function guardar() {
   }
   error.value = ''
   try {
-    await guardarPresupuesto({ categoriaId: categoriaId.value, mes: mes.value, montoLimite })
+    await guardarPresupuesto({ categoriaId: categoriaId.value, mes: mes.value, montoLimite, moneda: moneda.value })
     monto.value = ''
     categoriaId.value = ''
     await cargar()
@@ -87,6 +89,11 @@ onMounted(async () => {
           <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nombre }}</option>
         </select>
       </label>
+      <label>Moneda
+        <select v-model="moneda" name="moneda">
+          <option v-for="m in MONEDAS" :key="m" :value="m">{{ m }}</option>
+        </select>
+      </label>
       <label>Límite mensual
         <CampoMonto v-model="monto" />
       </label>
@@ -98,7 +105,7 @@ onMounted(async () => {
     <ul class="lista panel">
       <li v-for="p in estados" :key="p.id" class="item">
         <div class="cabecera">
-          <h2>{{ nombreCategoria(p.categoriaId) }}</h2>
+          <h2>{{ nombreCategoria(p.categoriaId) }} <span class="moneda">{{ p.moneda }}</span></h2>
           <button type="button" @click="eliminar(p)">Eliminar</button>
         </div>
         <BarraPresupuesto :monto-limite="p.montoLimite" :consumido="p.consumido" :restante="p.restante" :porcentaje="p.porcentaje" :alerta="p.alerta" />
