@@ -29,8 +29,9 @@ describe('ListaGastosCompartidos', () => {
   it('solo el creador ve Editar y Eliminar', () => {
     const w = montar('u1')
     const filas = w.findAll('[data-gasto]')
-    expect(filas[0].findAll('button').map((b) => b.text())).toEqual(['Editar', 'Eliminar'])
-    expect(filas[1].findAll('button')).toHaveLength(0)
+    expect(filas[0].findAll('button').map((b) => b.text())).toEqual(['Editar', 'Eliminar', 'Registrar aporte'])
+    // Cualquier integrante puede registrar un aporte, pero solo el creador edita o elimina.
+    expect(filas[1].findAll('button').map((b) => b.text())).toEqual(['Registrar aporte'])
   })
 
   it('un usuario que no creó ningún gasto no ve botones', () => {

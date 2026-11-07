@@ -23,7 +23,6 @@ describe('FormularioGastoCompartido', () => {
     await w.find('form').trigger('submit')
     const datos = w.emitted('guardar')[0][0]
     expect(datos.monto).toBe('100.00')
-    expect(datos.pagadorId).toBe('u1')
   })
 
   it('con reparto personalizado de suma distinta deshabilita el envío', async () => {
@@ -100,7 +99,6 @@ describe('FormularioGastoCompartido en modo edición', () => {
     expect(w.find('input[name="monto"]').element.value).toBe('90,00')
     expect(w.find('input[name="fecha"]').element.value).toBe('2026-09-15')
     expect(w.find('input[name="descripcion"]').element.value).toBe('Cena')
-    expect(w.find('select[name="pagadorId"]').element.value).toBe('u2')
     expect(w.find('select[name="categoriaId"]').element.value).toBe('c-base')
     expect(w.find('select[name="modo"]').element.value).toBe('personalizado')
     expect(w.find('input[name="monto-u1"]').element.value).toBe('60,00')
@@ -114,7 +112,7 @@ describe('FormularioGastoCompartido en modo edición', () => {
     await w.find('form').trigger('submit')
     const datos = w.emitted('guardar')[0][0]
     expect(datos).toEqual({
-      pagadorId: 'u2',
+      aportes: [],
       monto: '90.00',
       fecha: '2026-09-15',
       descripcion: 'Cena',
