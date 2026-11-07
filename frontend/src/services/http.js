@@ -49,6 +49,7 @@ async function pedirSinContar(metodo, url, cuerpo, reintento = false) {
   if (!respuesta.ok) {
     const error = new Error(datos?.error || datos?.mensaje || 'Ocurrió un error inesperado')
     error.status = respuesta.status
+    error.codigo = datos?.codigo
     error.mensaje = error.message
     throw error
   }

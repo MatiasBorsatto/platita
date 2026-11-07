@@ -21,12 +21,12 @@ function emitirTokens(usuario) {
   return { accessToken: emitirAccessToken(usuario), refreshToken: firmar(usuario, 'refresh', '30d') };
 }
 
-async function registrar({ nombre, email, password }) {
+async function registrar({ nombre, email, password, fechaNacimiento }) {
   const existente = await Usuario.findOne({ where: { email } });
   if (existente) throw new ErrorConflicto('El email ya está registrado');
   const passwordHash = await bcrypt.hash(password, COSTO_HASH);
   try {
-    return await Usuario.create({ nombre, email, passwordHash });
+    return await Usuario.create({ nombre, email, passwordHash, fechaNacimiento });
   } catch (err) {
     if (err.name === 'SequelizeUniqueConstraintError') throw new ErrorConflicto('El email ya está registrado');
     throw err;

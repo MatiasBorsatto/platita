@@ -4,7 +4,9 @@ const { Op } = require('sequelize');
 const { Usuario } = require('../../db/models');
 const TokenRecuperacion = require('../../db/models/token-recuperacion');
 const email = require('../../services/email');
-const { ErrorValidacion, ErrorConflicto, ErrorNoAutenticado } = require('../../utils/errores');
+const { ErrorValidacion, ErrorConflicto, ErrorNoAutenticado, ErrorProhibido } = require('../../utils/errores');
+const { hoyBA } = require('../../utils/fechas');
+const { validarFechaNacimiento } = require('../autorizacion/clasificacion');
 
 const COSTO_HASH = 12;
 const VIGENCIA_TOKEN_MS = 60 * 60 * 1000;
@@ -19,7 +21,13 @@ function validarPasswordNueva(password) {
 }
 
 function publico(u) {
-  return { id: u.id, nombre: u.nombre, email: u.email, preferenciasEmail: u.preferenciasEmail };
+  return {
+    id: u.id,
+    nombre: u.nombre,
+    email: u.email,
+    preferenciasEmail: u.preferenciasEmail,
+    fechaNacimiento: u.fechaNacimiento ?? null,
+  };
 }
 
 async function obtenerPerfil(usuarioId) {
@@ -28,7 +36,7 @@ async function obtenerPerfil(usuarioId) {
   return publico(u);
 }
 
-async function actualizarPerfil(usuarioId, { nombre, email: nuevoEmail, passwordActual, passwordNueva, preferenciasEmail } = {}) {
+async function actualizarPerfil(usuarioId, { nombre, email: nuevoEmail, passwordActual, passwordNueva, preferenciasEmail, fechaNacimiento } = {}) {
   const u = await Usuario.findByPk(usuarioId);
   if (!u) throw new ErrorNoAutenticado('No autenticado');
   const cambios = {};
@@ -43,6 +51,16 @@ async function actualizarPerfil(usuarioId, { nombre, email: nuevoEmail, password
     if (normalizado !== u.email) {
       if (await Usuario.findOne({ where: { email: normalizado } })) throw new ErrorConflicto('El email ya está registrado');
       cambios.email = normalizado;
+    }
+  }
+  if (fechaNacimiento !== undefined) {
+    // Se carga una vez y no se cambia: evita que un menor se declare adulto.
+    if (u.fechaNacimiento) {
+      if (String(u.fechaNacimiento) !== fechaNacimiento) {
+        throw new ErrorProhibido('La fecha de nacimiento ya está cargada y no se puede cambiar');
+      }
+    } else {
+      cambios.fechaNacimiento = validarFechaNacimiento(fechaNacimiento, hoyBA().slice(0, 10));
     }
   }
   if (preferenciasEmail !== undefined) {

@@ -9,6 +9,8 @@ const sesion = useSesion()
 const nombre = ref('')
 const email = ref('')
 const password = ref('')
+const fechaNacimiento = ref('')
+const hoy = new Date().toISOString().slice(0, 10)
 const error = ref('')
 const enviando = ref(false)
 
@@ -16,7 +18,7 @@ async function enviar() {
   error.value = ''
   enviando.value = true
   try {
-    await registrar(nombre.value, email.value, password.value)
+    await registrar(nombre.value, email.value, password.value, fechaNacimiento.value)
     await sesion.iniciarSesion(email.value, password.value)
     await router.push('/')
   } catch (e) {
@@ -36,6 +38,9 @@ async function enviar() {
       </label>
       <label>Email
         <input v-model="email" type="email" autocomplete="email" required />
+      </label>
+      <label>Fecha de nacimiento
+        <input v-model="fechaNacimiento" type="date" autocomplete="bday" :max="hoy" required />
       </label>
       <label>Contraseña (mínimo 8 caracteres)
         <input v-model="password" type="password" autocomplete="new-password" minlength="8" required />

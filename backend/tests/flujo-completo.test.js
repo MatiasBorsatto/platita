@@ -48,7 +48,7 @@ test('registro, grupo, invitaciones, gasto de 100.00 entre 3, saldos en cero y p
   const agentes = correos.map(() => request.agent(app));
   const nombres = ['Ana', 'Bruno', 'Carla'];
   for (let i = 0; i < 3; i++) {
-    const reg = await agentes[i].post('/api/auth/registro').send({ nombre: nombres[i], email: correos[i], password });
+    const reg = await agentes[i].post('/api/auth/registro').send({ fechaNacimiento: '1990-01-01', nombre: nombres[i], email: correos[i], password });
     expect(reg.status).toBe(201);
     expect((await agentes[i].post('/api/auth/login').send({ email: correos[i], password })).status).toBe(200);
   }

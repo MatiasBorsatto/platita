@@ -15,7 +15,7 @@ let claveActual = password;
 let espia;
 
 beforeAll(async () => {
-  await request(app).post('/api/auth/registro').send({ nombre: 'Ana', email: correo, password });
+  await request(app).post('/api/auth/registro').send({ fechaNacimiento: '1990-01-01', nombre: 'Ana', email: correo, password });
 });
 
 beforeEach(() => {

@@ -13,7 +13,7 @@ afterAll(async () => {
 });
 
 test('registro crea usuario y devuelve 201', async () => {
-  const res = await request(app).post('/api/auth/registro').send({ nombre: 'Ana', email, password });
+  const res = await request(app).post('/api/auth/registro').send({ fechaNacimiento: '1990-01-01', nombre: 'Ana', email, password });
   expect(res.status).toBe(201);
   expect(res.body.email).toBe(email);
   expect(res.body.passwordHash).toBeUndefined();
@@ -22,12 +22,12 @@ test('registro crea usuario y devuelve 201', async () => {
 });
 
 test('registro con email repetido responde 409', async () => {
-  const res = await request(app).post('/api/auth/registro').send({ nombre: 'Ana', email, password });
+  const res = await request(app).post('/api/auth/registro').send({ fechaNacimiento: '1990-01-01', nombre: 'Ana', email, password });
   expect(res.status).toBe(409);
 });
 
 test('registro con datos inválidos responde 400', async () => {
-  const res = await request(app).post('/api/auth/registro').send({ nombre: '', email: 'no-es-email', password: 'corta' });
+  const res = await request(app).post('/api/auth/registro').send({ fechaNacimiento: '1990-01-01', nombre: '', email: 'no-es-email', password: 'corta' });
   expect(res.status).toBe(400);
 });
 

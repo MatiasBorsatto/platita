@@ -17,7 +17,7 @@ describe('ruta /perfil', () => {
   it('con sesión se permite', async () => {
     const sesion = useSesion()
     sesion.cargarSesion = async () => {}
-    sesion.usuario = { id: 1, email: 'a@b.com' }
+    sesion.usuario = { id: 1, email: 'a@b.com', fechaNacimiento: '1990-01-01' }
     const router = crearRouter()
     await router.push('/perfil')
     expect(router.currentRoute.value.path).toBe('/perfil')

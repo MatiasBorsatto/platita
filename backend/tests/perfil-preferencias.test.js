@@ -22,7 +22,7 @@ async function esperarEmail(cantidad) {
 
 beforeAll(async () => {
   agent = request.agent(app);
-  await agent.post('/api/auth/registro').send({ nombre: 'Pía', email: correo, password });
+  await agent.post('/api/auth/registro').send({ fechaNacimiento: '1990-01-01', nombre: 'Pía', email: correo, password });
   await agent.post('/api/auth/login').send({ email: correo, password });
   usuario = await Usuario.findOne({ where: { email: correo } });
 });

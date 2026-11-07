@@ -12,7 +12,7 @@ const clave = 'clave-autorizacion-9';
 const creados = [];
 
 async function usuario(nombre, fechaNacimiento) {
-  await request(app).post('/api/auth/registro').send({ nombre, email: correo(nombre), password: clave });
+  await request(app).post('/api/auth/registro').send({ fechaNacimiento: '1990-01-01', nombre, email: correo(nombre), password: clave });
   const u = await Usuario.findOne({ where: { email: correo(nombre) } });
   creados.push(u.id);
   if (fechaNacimiento !== undefined) await Usuario.update({ fechaNacimiento }, { where: { id: u.id } });
@@ -117,10 +117,28 @@ describe('autorización en gastos fijos (integración)', () => {
     expect(res.status).toBe(400);
   });
 
-  test('un usuario sin fecha de nacimiento puede crear gastos propios, pero no con tarjeta', async () => {
-    const sinFecha = await usuario('sinfecha');
-    expect((await sinFecha.agent.post('/api/gastos-fijos').send(gastoSimple)).status).toBe(201);
-    expect((await sinFecha.agent.post('/api/gastos-fijos').send(gastoTarjeta)).status).toBe(403);
+  test('un usuario sin fecha de nacimiento no puede usar la app hasta cargarla', async () => {
+    const sinFecha = await usuario('sinfecha', null);
+    const res = await sinFecha.agent.get('/api/gastos-fijos');
+    expect(res.status).toBe(403);
+    expect(res.body.codigo).toBe('FECHA_NACIMIENTO_PENDIENTE');
+    expect((await sinFecha.agent.get('/api/usuario/perfil')).status).toBe(200);
+  });
+
+  test('la fecha de nacimiento se carga una sola vez desde el perfil', async () => {
+    const nuevo = await usuario('cargafecha', null);
+    expect((await nuevo.agent.patch('/api/usuario/perfil').send({ fechaNacimiento: '2000-05-05' })).status).toBe(200);
+    expect((await nuevo.agent.patch('/api/usuario/perfil').send({ fechaNacimiento: '2000-05-05' })).status).toBe(200);
+    expect((await nuevo.agent.patch('/api/usuario/perfil').send({ fechaNacimiento: '1970-01-01' })).status).toBe(403);
+    expect((await nuevo.agent.get('/api/gastos-fijos')).status).toBe(200);
+  });
+
+  test('el registro exige una fecha de nacimiento real y no futura', async () => {
+    const base = { nombre: 'X', password: clave };
+    const sin = await request(app).post('/api/auth/registro').send({ ...base, email: correo('reg1') });
+    expect(sin.status).toBe(400);
+    const futura = await request(app).post('/api/auth/registro').send({ ...base, email: correo('reg2'), fechaNacimiento: '2999-01-01' });
+    expect(futura.status).toBe(400);
   });
 
   test('no se puede crear un gasto de grupo en un grupo del que no se es miembro', async () => {

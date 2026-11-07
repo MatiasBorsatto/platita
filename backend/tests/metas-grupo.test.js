@@ -11,7 +11,7 @@ let agentA, agentB, agentX, grupoId, otroGrupoId, ids;
 
 async function sesion(correo, nombre) {
   const agent = request.agent(app);
-  await agent.post('/api/auth/registro').send({ nombre, email: correo, password });
+  await agent.post('/api/auth/registro').send({ fechaNacimiento: '1990-01-01', nombre, email: correo, password });
   await agent.post('/api/auth/login').send({ email: correo, password });
   return agent;
 }

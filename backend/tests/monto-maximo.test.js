@@ -8,7 +8,7 @@ const app = createApp();
 const correo = `monto-maximo-${Date.now()}@example.com`;
 
 beforeAll(async () => {
-  await request(app).post('/api/auth/registro').send({ nombre: 'Monto', email: correo, password: 'clave-monto-prueba-9' });
+  await request(app).post('/api/auth/registro').send({ fechaNacimiento: '1990-01-01', nombre: 'Monto', email: correo, password: 'clave-monto-prueba-9' });
 });
 
 afterAll(async () => {
