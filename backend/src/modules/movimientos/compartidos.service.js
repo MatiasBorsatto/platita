@@ -98,7 +98,7 @@ async function conAportes(movimientoId) {
 // El llamador ya verificó que usuarioId es miembro del grupo (grupoAccesible).
 async function crearGastoCompartido(
   usuarioId,
-  { grupoId, pagadorId, monto, fecha, categoriaId = null, descripcion = null, participantes, aportes }
+  { grupoId, pagadorId, monto, fecha, categoriaId = null, descripcion = null, participantes, aportes, moneda = 'ARS' }
 ) {
   if (pagadorId && !(await esMiembro(grupoId, pagadorId))) {
     throw new ErrorValidacion('El pagador debe ser miembro del grupo');
@@ -127,6 +127,7 @@ async function crearGastoCompartido(
         fecha,
         descripcion,
         categoriaId,
+        moneda,
       },
       { transaction }
     );
@@ -184,6 +185,7 @@ async function editarGastoCompartido(usuarioId, grupoId, movimientoId, datos) {
     fecha: datos.fecha ?? mov.fecha,
     descripcion: datos.descripcion !== undefined ? datos.descripcion : mov.descripcion,
     categoriaId: datos.categoriaId !== undefined ? datos.categoriaId : mov.categoriaId,
+    moneda: datos.moneda ?? mov.moneda,
   };
   if (nuevo.pagadorId && !(await esMiembro(grupoId, nuevo.pagadorId))) {
     throw new ErrorValidacion('El pagador debe ser miembro del grupo');

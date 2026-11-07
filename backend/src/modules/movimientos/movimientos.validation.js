@@ -70,6 +70,7 @@ function validarEditar(body = {}) {
   if (body.categoriaId !== undefined) {
     datos.categoriaId = body.categoriaId === null ? null : validarUuid(body.categoriaId, 'categoriaId');
   }
+  if (body.moneda !== undefined) datos.moneda = validarMoneda(body.moneda);
   return datos;
 }
 
@@ -93,6 +94,7 @@ function validarGastoCompartido(body = {}) {
     fecha: validarFecha(body.fecha),
     descripcion: validarDescripcion(body.descripcion),
     categoriaId: body.categoriaId ? validarUuid(body.categoriaId, 'categoriaId') : null,
+    moneda: validarMoneda(body.moneda),
   };
   if (body.participantes !== undefined && body.participantes !== null) {
     if (!Array.isArray(body.participantes) || body.participantes.length === 0) {
@@ -112,6 +114,7 @@ function validarEdicionGastoCompartido(body = {}) {
   const datos = {};
   if (body.fecha !== undefined) datos.fecha = validarFecha(body.fecha);
   if (body.monto !== undefined) datos.monto = validarMonto(body.monto);
+  if (body.moneda !== undefined) datos.moneda = validarMoneda(body.moneda);
   if (body.descripcion !== undefined) {
     datos.descripcion = validarDescripcion(body.descripcion);
     if (datos.descripcion && datos.descripcion.length > 200) {

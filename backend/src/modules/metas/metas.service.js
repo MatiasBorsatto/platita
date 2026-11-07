@@ -48,11 +48,11 @@ async function vistaDe(meta) {
   return conProgreso(meta, acumulados.get(meta.id));
 }
 
-async function crearMeta(usuarioId, { nombre, montoObjetivo, fechaLimite = null, grupoId = null }) {
+async function crearMeta(usuarioId, { nombre, montoObjetivo, fechaLimite = null, grupoId = null, moneda = 'ARS' }) {
   if (grupoId && !(await MiembroGrupo.findOne({ where: { grupoId, usuarioId } }))) {
     throw new ErrorNoEncontrado('Grupo no encontrado');
   }
-  const meta = await Meta.create({ usuarioId, grupoId, nombre, montoObjetivo, fechaLimite });
+  const meta = await Meta.create({ usuarioId, grupoId, nombre, montoObjetivo, fechaLimite, moneda });
   return vistaDe(meta);
 }
 

@@ -14,11 +14,13 @@ function agrupar(filas, claveDe) {
 }
 
 // El llamador ya verificó que el usuario es miembro del grupo (grupoAccesible).
+// Devuelve una fila por integrante y por moneda: los saldos nunca mezclan monedas.
 async function saldosDelGrupo(usuarioId, grupoId) {
   const movs = await Movimiento.findAll({
     where: { grupoId, alcance: 'compartido', tipo: 'gasto' },
-    attributes: ['id', 'monto'],
+    attributes: ['id', 'monto', 'moneda'],
   });
+  const monedaDe = new Map(movs.map((m) => [m.id, m.moneda]));
   const participaciones = movs.length
     ? await ParticipacionGasto.findAll({ where: { movimientoId: movs.map((m) => m.id) } })
     : [];
@@ -31,27 +33,36 @@ async function saldosDelGrupo(usuarioId, grupoId) {
     order: [['createdAt', 'ASC'], ['id', 'ASC']],
   });
 
-  const saldos = calcularSaldos({
-    aportadoPorUsuario: agrupar(aportes, (a) => a.usuarioId),
-    participacionPorUsuario: agrupar(participaciones, (p) => p.usuarioId),
-    pagosRealizados: agrupar(pagos, (p) => p.deudorId),
-    pagosRecibidos: agrupar(pagos, (p) => p.acreedorId),
-  });
-
-  const ids = [...new Set([...miembros.map((m) => m.usuarioId), ...saldos.keys()])];
+  const monedas = new Set([...movs.map((m) => m.moneda), ...pagos.map((p) => p.moneda)]);
+  if (monedas.size === 0) monedas.add('ARS');
+  const ids = [...new Set(miembros.map((m) => m.usuarioId))];
   const usuarios = await Usuario.findAll({ where: { id: ids }, attributes: ['id', 'nombre'] });
   const nombres = Object.fromEntries(usuarios.map((u) => [u.id, u.nombre]));
-  return ids.map((id) => ({ usuarioId: id, nombre: nombres[id] ?? null, saldo: saldos.get(id) ?? '0.00' }));
+
+  const filas = [];
+  for (const moneda of [...monedas].sort()) {
+    const saldos = calcularSaldos({
+      aportadoPorUsuario: agrupar(aportes.filter((a) => monedaDe.get(a.movimientoId) === moneda), (a) => a.usuarioId),
+      participacionPorUsuario: agrupar(participaciones.filter((p) => monedaDe.get(p.movimientoId) === moneda), (p) => p.usuarioId),
+      pagosRealizados: agrupar(pagos.filter((p) => p.moneda === moneda), (p) => p.deudorId),
+      pagosRecibidos: agrupar(pagos.filter((p) => p.moneda === moneda), (p) => p.acreedorId),
+    });
+    const idsMoneda = [...new Set([...ids, ...saldos.keys()])];
+    for (const id of idsMoneda) {
+      filas.push({ usuarioId: id, nombre: nombres[id] ?? null, moneda, saldo: saldos.get(id) ?? '0.00' });
+    }
+  }
+  return filas;
 }
 
-async function registrarPago(usuarioId, grupoId, { deudorId, acreedorId, monto, fecha, nota = null }) {
+async function registrarPago(usuarioId, grupoId, { deudorId, acreedorId, monto, moneda = 'ARS', fecha, nota = null }) {
   if (deudorId === acreedorId) throw new ErrorValidacion('El deudor y el acreedor deben ser distintos');
   for (const id of [deudorId, acreedorId]) {
     if (!(await MiembroGrupo.findOne({ where: { grupoId, usuarioId: id } }))) {
       throw new ErrorValidacion('El deudor y el acreedor deben ser miembros del grupo');
     }
   }
-  const pago = await PagoEntreMiembros.create({ grupoId, deudorId, acreedorId, monto, fecha, nota });
+  const pago = await PagoEntreMiembros.create({ grupoId, deudorId, acreedorId, monto, moneda, fecha, nota });
   return pago.toJSON();
 }
 

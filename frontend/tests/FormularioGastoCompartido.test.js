@@ -114,6 +114,7 @@ describe('FormularioGastoCompartido en modo edición', () => {
     expect(datos).toEqual({
       aportes: [],
       monto: '90.00',
+      moneda: 'ARS',
       fecha: '2026-09-15',
       descripcion: 'Cena',
       categoriaId: 'c-base',

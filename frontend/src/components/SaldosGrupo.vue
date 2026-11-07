@@ -1,7 +1,8 @@
 <script setup>
-import { formatearMonto } from '../utils/formato.js'
+import { formatearMontoEn } from '../utils/formato.js'
 
-// saldos: [{ usuarioId, nombre, saldo }] tal como los devuelve la API (no se recalculan).
+// saldos: [{ usuarioId, nombre, moneda, saldo }] tal como los devuelve la API (no se recalculan).
+// Cada moneda tiene su propia fila: nunca se suman dólares con pesos.
 const props = defineProps({
   saldos: { type: Array, default: () => [] },
   usuarioId: { type: String, default: null }
@@ -12,10 +13,10 @@ const esMio = (s) => props.usuarioId !== null && s.usuarioId === props.usuarioId
 
 function descripcion(s) {
   if (s.saldo.startsWith('-')) {
-    return { texto: esMio(s) ? 'debés' : 'debe', monto: formatearMonto(s.saldo.slice(1)) }
+    return { texto: esMio(s) ? 'debés' : 'debe', monto: formatearMontoEn(s.saldo.slice(1), s.moneda) }
   }
   if (s.saldo === '0.00') return { texto: 'está al día', monto: '' }
-  return { texto: esMio(s) ? 'te deben' : 'le deben', monto: formatearMonto(s.saldo) }
+  return { texto: esMio(s) ? 'te deben' : 'le deben', monto: formatearMontoEn(s.saldo, s.moneda) }
 }
 </script>
 
@@ -27,7 +28,7 @@ function descripcion(s) {
     </div>
     <p v-if="saldos.length === 0">Todavía no hay saldos.</p>
     <ul class="lista">
-      <li v-for="s in saldos" :key="s.usuarioId" data-saldo class="fila">
+      <li v-for="s in saldos" :key="`${s.usuarioId}-${s.moneda}`" data-saldo class="fila">
         <span class="nombre">{{ s.nombre ?? 'Ex miembro' }}</span>
         <span class="texto">{{ descripcion(s).texto }} {{ descripcion(s).monto }}</span>
       </li>

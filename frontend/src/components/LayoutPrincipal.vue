@@ -114,9 +114,10 @@ async function salir() {
   .marca { display: none; }
   .navegacion {
     position: fixed; top: auto; bottom: 12px; left: 12px; right: 12px; width: auto; height: auto; z-index: 10;
-    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch;
+    /* Una sola fila que se desplaza en horizontal: con diez secciones no tapa el contenido. */
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(84px, 1fr); align-items: stretch;
     gap: 2px; padding: 8px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: var(--sombra-elevada);
+    box-shadow: var(--sombra-elevada); overflow-x: auto; scrollbar-width: none;
   }
   .enlace {
     flex-direction: column; justify-content: center; gap: 2px; min-height: 52px;

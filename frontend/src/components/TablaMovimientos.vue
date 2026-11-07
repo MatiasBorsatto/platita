@@ -1,5 +1,5 @@
 <script setup>
-import { formatearMonto } from '../utils/formato.js'
+import { formatearMontoEn } from '../utils/formato.js'
 
 const props = defineProps({
   movimientos: { type: Array, default: () => [] },
@@ -38,7 +38,7 @@ function esFijo(m) {
               <span v-if="esFijo(m)" class="etiqueta">Gasto fijo</span>
             </td>
             <td>{{ nombreCategoria(m.categoriaId) }}</td>
-            <td class="num" :class="m.tipo">{{ signo(m) }}{{ formatearMonto(m.monto) }}</td>
+            <td class="num" :class="m.tipo">{{ signo(m) }}{{ formatearMontoEn(m.monto, m.moneda) }}</td>
             <td class="acciones">
               <button v-if="!esFijo(m)" type="button" @click="emit('editar', m)">Editar</button>
               <button v-if="!esFijo(m)" type="button" @click="emit('eliminar', m)">Eliminar</button>
@@ -50,7 +50,7 @@ function esFijo(m) {
     </div>
     <ul class="tarjetas">
       <li v-for="m in movimientos" :key="m.id" class="tarjeta">
-        <div class="fila"><span>{{ fechaLegible(m.fecha) }}</span><strong :class="m.tipo">{{ signo(m) }}{{ formatearMonto(m.monto) }}</strong></div>
+        <div class="fila"><span>{{ fechaLegible(m.fecha) }}</span><strong :class="m.tipo">{{ signo(m) }}{{ formatearMontoEn(m.monto, m.moneda) }}</strong></div>
         <div>
           {{ m.descripcion || '—' }}
           <span v-if="esFijo(m)" class="etiqueta">Gasto fijo</span>

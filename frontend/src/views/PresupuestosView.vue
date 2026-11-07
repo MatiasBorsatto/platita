@@ -118,7 +118,7 @@ onMounted(async () => {
 <style scoped>
 h1 { font-size: 1.5rem; margin-top: 0; }
 .error-form { padding: 10px; margin-bottom: 12px; border-radius: 8px; background: var(--error-fondo); color: var(--error); }
-.form-pres { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; margin-bottom: 20px; }
+.form-pres { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; align-items: end; margin-bottom: 20px; }
 .form-pres label { display: block; font-size: 0.9rem; color: var(--texto-suave); min-width: 0; }
 .form-pres input, .form-pres select {
   display: block; width: 100%; margin-top: 4px; padding: 10px;

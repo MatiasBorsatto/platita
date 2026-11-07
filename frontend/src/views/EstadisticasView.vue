@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { ref, onMounted } from 'vue'
 import GraficoIngresosGastos from '../charts/GraficoIngresosGastos.vue'
 import GraficoGastosPorCategoria from '../charts/GraficoGastosPorCategoria.vue'
@@ -15,6 +16,39 @@ const desde = ref(aMes(new Date(ahora.getFullYear(), ahora.getMonth() - 5, 1)))
 const hasta = ref(aMes(ahora))
 const resumen = ref(null)
 const serie = ref([])
+// Las estadísticas se muestran por moneda. Nunca se suman dólares con pesos.
+const moneda = ref('ARS')
+
+// Resumen del mes para la moneda elegida (cero si no hubo movimientos en esa moneda).
+const cifrasMes = computed(() => {
+  const vacio = { ingresos: '0.00', gastos: '0.00', ahorroNeto: '0.00', aportesMetas: '0.00', gastosPorCategoria: [] }
+  if (!resumen.value) return vacio
+  const porMoneda = (resumen.value.porMoneda || []).find((m) => m.moneda === moneda.value)
+  return porMoneda ?? vacio
+})
+
+// La serie histórica para la moneda elegida, con el mismo formato que espera el gráfico.
+const serieMoneda = computed(() =>
+  serie.value.map((f) => {
+    const m = (f.porMoneda || []).find((x) => x.moneda === moneda.value)
+    return {
+      mes: f.mes,
+      ingresos: m?.ingresos ?? '0.00',
+      gastos: m?.gastos ?? '0.00',
+      ahorroNeto: m?.ahorroNeto ?? '0.00',
+      aportesMetas: m?.aportesMetas ?? '0.00',
+      gastosPorCategoria: []
+    }
+  })
+)
+
+// Monedas que aparecen en los datos, más pesos, para el selector.
+const monedasDisponibles = computed(() => {
+  const usadas = new Set(['ARS'])
+  for (const m of resumen.value?.porMoneda || []) usadas.add(m.moneda)
+  for (const f of serie.value) for (const m of f.porMoneda || []) usadas.add(m.moneda)
+  return [...usadas].sort()
+})
 const errorMes = ref('')
 const errorRango = ref('')
 const cargandoMes = ref(false)
@@ -67,6 +101,11 @@ onMounted(() => {
 <template>
   <section class="estadisticas">
     <h1>Estadísticas</h1>
+    <label class="selector-moneda">Moneda
+      <select v-model="moneda" name="moneda">
+        <option v-for="m in monedasDisponibles" :key="m" :value="m">{{ m }}</option>
+      </select>
+    </label>
 
     <section aria-labelledby="titulo-mes" class="bloque">
       <h2 id="titulo-mes">Resumen del mes</h2>
@@ -77,13 +116,13 @@ onMounted(() => {
       <CargandoIndicador v-if="cargandoMes" />
       <template v-if="resumen">
         <dl class="cifras">
-          <div class="cifra ingresos"><dt>Ingresos</dt><dd data-ingresos><CifraAnimada :valor="resumen.ingresos" /></dd></div>
-          <div class="cifra gastos"><dt>Gastos</dt><dd data-gastos><CifraAnimada :valor="resumen.gastos" /></dd></div>
-          <div class="cifra ahorro"><dt>Ahorro neto</dt><dd data-ahorro><CifraAnimada :valor="resumen.ahorroNeto" /></dd></div>
-          <div class="cifra aportes"><dt>Aportes a metas</dt><dd data-aportes><CifraAnimada :valor="resumen.aportesMetas" /></dd></div>
+          <div class="cifra ingresos"><dt>Ingresos</dt><dd data-ingresos><CifraAnimada :valor="cifrasMes.ingresos" :moneda="moneda" /></dd></div>
+          <div class="cifra gastos"><dt>Gastos</dt><dd data-gastos><CifraAnimada :valor="cifrasMes.gastos" :moneda="moneda" /></dd></div>
+          <div class="cifra ahorro"><dt>Ahorro neto</dt><dd data-ahorro><CifraAnimada :valor="cifrasMes.ahorroNeto" :moneda="moneda" /></dd></div>
+          <div class="cifra aportes"><dt>Aportes a metas</dt><dd data-aportes><CifraAnimada :valor="cifrasMes.aportesMetas" :moneda="moneda" /></dd></div>
         </dl>
-        <p v-if="resumen.gastosPorCategoria.length === 0">No hay gastos en este mes.</p>
-        <GraficoGastosPorCategoria v-else :datos="resumen.gastosPorCategoria" />
+        <p v-if="cifrasMes.gastosPorCategoria.length === 0">No hay gastos en este mes en {{ moneda }}.</p>
+        <GraficoGastosPorCategoria v-else :datos="cifrasMes.gastosPorCategoria" />
       </template>
     </section>
 
@@ -100,14 +139,16 @@ onMounted(() => {
       <p v-if="errorRango" class="error-form" role="alert">{{ errorRango }}</p>
       <CargandoIndicador v-if="cargandoRango" />
       <template v-if="serie.length">
-        <GraficoIngresosGastos :datos="serie" />
-        <GraficoAhorroNeto :datos="serie" />
+        <GraficoIngresosGastos :datos="serieMoneda" />
+        <GraficoAhorroNeto :datos="serieMoneda" />
       </template>
     </section>
   </section>
 </template>
 
 <style scoped>
+.selector-moneda { display: inline-grid; gap: 4px; margin-bottom: 16px; font-size: 0.875rem; font-weight: 600; color: var(--texto-suave); }
+.selector-moneda select { min-height: 44px; padding: 8px 12px; }
 h1 { font-size: 1.5rem; margin-top: 0; }
 h2 { font-size: 1.1rem; }
 .estadisticas { display: grid; gap: 24px; min-width: 0; }

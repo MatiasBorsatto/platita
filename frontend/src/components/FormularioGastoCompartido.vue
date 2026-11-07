@@ -1,7 +1,8 @@
 <script setup>
 import CampoMonto from './CampoMonto.vue'
 import { ref, computed, watch } from 'vue'
-import { formatearMonto, normalizarMonto, aCentavos, deCentavos, hoyLocal } from '../utils/formato.js'
+import { formatearMontoEn, normalizarMonto, aCentavos, deCentavos, hoyLocal } from '../utils/formato.js'
+import { MONEDAS } from '../utils/gastoFijo.js'
 
 const props = defineProps({
   miembros: { type: Array, required: true }, // [{ usuarioId, nombre }]
@@ -15,6 +16,7 @@ const editando = !!props.gasto
 const hoy = hoyLocal()
 const g = props.gasto
 const monto = ref(g ? String(g.monto).replace('.', ',') : '')
+const moneda = ref(g?.moneda ?? 'ARS')
 const fecha = ref(g?.fecha ?? hoy)
 const descripcion = ref(g?.descripcion ?? '')
 const categoriaId = ref(g?.categoriaId ?? '')
@@ -122,6 +124,7 @@ function enviar() {
   }
   emit('guardar', {
     monto: total.value,
+    moneda: moneda.value,
     fecha: fecha.value,
     descripcion: descripcion.value.trim() || null,
     categoriaId: categoriaId.value || null,
@@ -141,6 +144,11 @@ function enviar() {
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
     <label>Monto total
       <CampoMonto v-model="monto" name="monto" />
+    </label>
+    <label>Moneda
+      <select v-model="moneda" name="moneda">
+        <option v-for="m in MONEDAS" :key="m" :value="m">{{ m }}</option>
+      </select>
     </label>
     <label>Fecha
       <input v-model="fecha" name="fecha" type="date" />
@@ -171,7 +179,7 @@ function enviar() {
     <ul class="reparto">
       <li v-for="m in miembros" :key="m.usuarioId">
         <span class="nombre">{{ m.nombre }}</span>
-        <span v-if="modo === 'igual'" class="corresponde" data-reparto>{{ igual[m.usuarioId] ? formatearMonto(igual[m.usuarioId]) : '—' }}</span>
+        <span v-if="modo === 'igual'" class="corresponde" data-reparto>{{ igual[m.usuarioId] ? formatearMontoEn(igual[m.usuarioId], moneda) : '—' }}</span>
         <CampoMonto
           v-else
           v-model="personalizados[m.usuarioId]"
@@ -190,7 +198,7 @@ function enviar() {
       </li>
     </ul>
     <p v-if="modo === 'personalizado' && total && !sumaCoincide" class="aviso" role="status">
-      La suma ({{ formatearMonto(deCentavos(sumaCentavos)) }}) no coincide con el total ({{ formatearMonto(total) }}).
+      La suma ({{ formatearMontoEn(deCentavos(sumaCentavos), moneda) }}) no coincide con el total ({{ formatearMontoEn(total, moneda) }}).
     </p>
 
     <div class="acciones">

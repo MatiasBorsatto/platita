@@ -20,9 +20,17 @@ async function serieHistorica(usuarioId, desde, hasta) {
   for (const l of lineas) {
     if (porMes.has(l.mes)) porMes.get(l.mes).push(l);
   }
+  // Los totales de primer nivel son en pesos; cada moneda aparece aparte, sin convertir.
   return meses.map((mes) => {
-    const { ingresos, gastos, ahorroNeto, gastosPorCategoria } = calcularResumen(porMes.get(mes), []);
-    return { mes, ingresos, gastos, ahorroNeto, gastosPorCategoria, aportesMetas: aportes.get(mes) ?? '0.00' };
+    const delMes = porMes.get(mes);
+    const pesos = delMes.filter((l) => l.moneda === 'ARS');
+    const { ingresos, gastos, ahorroNeto, gastosPorCategoria } = calcularResumen(pesos, []);
+    const monedas = [...new Set(delMes.map((l) => l.moneda))].sort();
+    const porMoneda = monedas.map((moneda) => {
+      const r = calcularResumen(delMes.filter((l) => l.moneda === moneda), []);
+      return { moneda, ingresos: r.ingresos, gastos: r.gastos, ahorroNeto: r.ahorroNeto, aportesMetas: aportes.get(`${mes}|${moneda}`) ?? '0.00' };
+    });
+    return { mes, ingresos, gastos, ahorroNeto, gastosPorCategoria, aportesMetas: aportes.get(`${mes}|ARS`) ?? '0.00', porMoneda };
   });
 }
 

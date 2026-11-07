@@ -9,6 +9,11 @@ const service = require('./saldos.service');
 const router = Router();
 router.use(autenticar);
 
+function validarMonedaPago(valor) {
+  if (typeof valor !== 'string' || !/^[A-Z]{3}$/.test(valor)) throw new ErrorValidacion('La moneda debe ser un código de 3 letras (por ejemplo ARS)');
+  return valor;
+}
+
 function validarPago(body = {}) {
   let nota = null;
   if (body.nota !== undefined && body.nota !== null) {
@@ -20,6 +25,7 @@ function validarPago(body = {}) {
     deudorId: validarUuid(body.deudorId, 'deudorId'),
     acreedorId: validarUuid(body.acreedorId, 'acreedorId'),
     monto: validarMonto(body.monto),
+    moneda: body.moneda === undefined || body.moneda === null ? 'ARS' : validarMonedaPago(body.moneda),
     fecha: validarFecha(body.fecha),
     nota,
   };

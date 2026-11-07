@@ -10,6 +10,7 @@ const Meta = sequelize.define(
     nombre: { type: DataTypes.STRING(100), allowNull: false },
     // DECIMAL llega como string desde pg: nunca se convierte a float.
     montoObjetivo: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+    moneda: { type: DataTypes.CHAR(3), allowNull: false, defaultValue: 'ARS' },
     fechaLimite: { type: DataTypes.DATEONLY, allowNull: true },
   },
   { tableName: 'metas' }

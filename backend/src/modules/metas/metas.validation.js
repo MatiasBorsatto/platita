@@ -20,12 +20,19 @@ function rechazarGrupo(body) {
   }
 }
 
+function validarMonedaMeta(valor) {
+  if (valor === undefined || valor === null) return 'ARS';
+  if (typeof valor !== 'string' || !/^[A-Z]{3}$/.test(valor)) throw new ErrorValidacion('La moneda debe ser un código de 3 letras (por ejemplo ARS)');
+  return valor;
+}
+
 function validarCrear(body = {}) {
   return {
     grupoId: body.grupoId === undefined || body.grupoId === null ? null : validarUuid(body.grupoId, 'grupoId'),
     nombre: validarNombre(body.nombre),
     montoObjetivo: validarMonto(body.montoObjetivo),
     fechaLimite: body.fechaLimite === undefined ? null : validarFechaLimite(body.fechaLimite),
+    moneda: validarMonedaMeta(body.moneda),
   };
 }
 

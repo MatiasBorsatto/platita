@@ -35,7 +35,7 @@ async function lineasDelMes(usuarioId, mes) {
 
 // Informativo: aportes (netos de retiros) del mes a las metas propias del usuario.
 async function aportesDelMes(usuarioId, mes) {
-  const metas = await Meta.findAll({ where: { usuarioId }, attributes: ['id'] });
+  const metas = await Meta.findAll({ where: { usuarioId, moneda: 'ARS' }, attributes: ['id'] });
   if (metas.length === 0) return '0.00';
   const aportes = await AporteMeta.findAll({
     where: { metaId: metas.map((m) => m.id), fecha: { [Op.between]: rangoDelMes(mes) } },
@@ -60,7 +60,7 @@ async function lineasDelRango(usuarioId, desde, hasta) {
   const fecha = { [Op.between]: [rangoDelMes(desde)[0], rangoDelMes(hasta)[1]] };
   const personales = await Movimiento.findAll({
     where: { usuarioId, alcance: 'personal', tipo: ['ingreso', 'gasto'], fecha },
-    attributes: ['tipo', 'monto', 'categoriaId', 'fecha'],
+    attributes: ['tipo', 'monto', 'categoriaId', 'fecha', 'moneda'],
   });
   const partes = await ParticipacionGasto.findAll({
     where: { usuarioId },
@@ -68,13 +68,13 @@ async function lineasDelRango(usuarioId, desde, hasta) {
     include: [{
       model: Movimiento,
       required: true,
-      attributes: ['fecha'],
+      attributes: ['fecha', 'moneda'],
       where: { tipo: 'gasto', alcance: 'compartido', fecha },
     }],
   });
   const lineas = [
-    ...personales.map((m) => ({ mes: m.fecha.slice(0, 7), tipo: m.tipo, monto: m.monto, categoriaId: m.categoriaId })),
-    ...partes.map((p) => ({ mes: p.Movimiento.fecha.slice(0, 7), tipo: 'gasto', monto: p.monto, categoriaId: p.categoriaId })),
+    ...personales.map((m) => ({ mes: m.fecha.slice(0, 7), tipo: m.tipo, monto: m.monto, categoriaId: m.categoriaId, moneda: m.moneda })),
+    ...partes.map((p) => ({ mes: p.Movimiento.fecha.slice(0, 7), tipo: 'gasto', monto: p.monto, categoriaId: p.categoriaId, moneda: p.Movimiento.moneda })),
   ];
   const catIds = [...new Set(lineas.map((l) => l.categoriaId).filter(Boolean))];
   const categorias = catIds.length ? await Categoria.findAll({ where: { id: catIds }, attributes: ['id', 'nombre'] }) : [];
@@ -85,18 +85,19 @@ async function lineasDelRango(usuarioId, desde, hasta) {
 // Mismos aportes que aportesDelMes, agrupados por mes en una sola consulta.
 async function aportesDelRango(usuarioId, desde, hasta) {
   const porMes = new Map();
-  const metas = await Meta.findAll({ where: { usuarioId }, attributes: ['id'] });
+  const metas = await Meta.findAll({ where: { usuarioId }, attributes: ['id', 'moneda'] });
   if (metas.length === 0) return porMes;
+  const monedaDeMeta = new Map(metas.map((m) => [m.id, m.moneda]));
   const aportes = await AporteMeta.findAll({
     where: { metaId: metas.map((m) => m.id), fecha: { [Op.between]: [rangoDelMes(desde)[0], rangoDelMes(hasta)[1]] } },
-    attributes: ['monto', 'fecha'],
+    attributes: ['monto', 'fecha', 'metaId'],
   });
   for (const a of aportes) {
-    const mes = a.fecha.slice(0, 7);
-    if (!porMes.has(mes)) porMes.set(mes, []);
-    porMes.get(mes).push(a.monto);
+    const clave = `${a.fecha.slice(0, 7)}|${monedaDeMeta.get(a.metaId)}`;
+    if (!porMes.has(clave)) porMes.set(clave, []);
+    porMes.get(clave).push(a.monto);
   }
-  return new Map([...porMes].map(([mes, montos]) => [mes, sumar(montos)]));
+  return new Map([...porMes].map(([clave, montos]) => [clave, sumar(montos)]));
 }
 
 async function resumenMensual(usuarioId, mes) {

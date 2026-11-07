@@ -160,4 +160,8 @@ h3 { font-size: 0.95rem; margin: 12px 0 6px; color: var(--texto-suave); }
 .interruptor.bloqueado { opacity: 0.6; cursor: not-allowed; }
 .interruptor input { width: 40px; height: 22px; accent-color: var(--primario); }
 .actividad { margin: 8px 0 0; padding-left: 18px; }
+/* El bloque de vinculación no es un <form>: mismas reglas de campos que el resto de los formularios. */
+.agregar label { display: grid; gap: 6px; font-size: 0.875rem; font-weight: 600; color: var(--texto-suave); min-width: 0; }
+.agregar input, .agregar select { width: 100%; min-height: 44px; padding: 10px 12px; font-size: 0.95rem; font-weight: 400; color: var(--texto); }
+.agregar button { justify-self: end; min-width: 160px; }
 </style>

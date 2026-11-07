@@ -4,7 +4,7 @@ export const TIPOS_PAGO = [
   { valor: 'tarjeta_credito', texto: 'Tarjeta de crédito' },
   { valor: 'tarjeta_debito', texto: 'Tarjeta de débito' }
 ]
-export const MONEDAS = ['ARS', 'USD', 'EUR']
+export const MONEDAS = ['ARS', 'USD']
 
 export const esTarjeta = (tipo) => tipo === 'tarjeta_credito' || tipo === 'tarjeta_debito'
 

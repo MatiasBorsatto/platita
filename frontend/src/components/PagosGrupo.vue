@@ -1,7 +1,8 @@
 <script setup>
 import CampoMonto from './CampoMonto.vue'
 import { ref } from 'vue'
-import { formatearMonto, normalizarMonto, hoyLocal } from '../utils/formato.js'
+import { formatearMontoEn, normalizarMonto, hoyLocal } from '../utils/formato.js'
+import { MONEDAS } from '../utils/gastoFijo.js'
 
 const props = defineProps({
   miembros: { type: Array, default: () => [] }, // [{ usuarioId, nombre }]
@@ -15,6 +16,7 @@ const hoy = hoyLocal()
 const deudorId = ref(props.usuarioId ?? '')
 const acreedorId = ref('')
 const monto = ref('')
+const moneda = ref('ARS')
 const fecha = ref(hoy)
 const nota = ref('')
 const error = ref('')
@@ -40,6 +42,7 @@ function enviar() {
     deudorId: deudorId.value,
     acreedorId: acreedorId.value,
     monto: montoNormal,
+    moneda: moneda.value,
     fecha: fecha.value,
     ...(nota.value.trim() ? { nota: nota.value.trim() } : {})
   })
@@ -66,6 +69,11 @@ function enviar() {
         </select>
       </label>
       <label>Monto <CampoMonto v-model="monto" name="monto" /></label>
+      <label>Moneda
+        <select v-model="moneda" name="moneda">
+          <option v-for="m in MONEDAS" :key="m" :value="m">{{ m }}</option>
+        </select>
+      </label>
       <label>Fecha <input v-model="fecha" name="fecha" type="date" /></label>
       <label>Nota (opcional) <input v-model="nota" name="nota" type="text" maxlength="255" /></label>
       <button type="submit" class="primario">Registrar pago</button>
@@ -74,7 +82,7 @@ function enviar() {
     <p v-if="pagos.length === 0">Todavía no hay pagos registrados.</p>
     <ul class="lista">
       <li v-for="p in pagos" :key="p.id" class="fila">
-        <span class="quien">{{ nombreDe(p.deudorId) }} le pagó {{ formatearMonto(p.monto) }} a {{ nombreDe(p.acreedorId) }}</span>
+        <span class="quien">{{ nombreDe(p.deudorId) }} le pagó {{ formatearMontoEn(p.monto, p.moneda) }} a {{ nombreDe(p.acreedorId) }}</span>
         <span class="fecha">{{ p.fecha.split('-').reverse().join('/') }}</span>
         <span v-if="p.nota" class="nota">{{ p.nota }}</span>
       </li>

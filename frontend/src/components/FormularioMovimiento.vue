@@ -3,6 +3,7 @@ import CampoMonto from './CampoMonto.vue'
 import { ref } from 'vue'
 import { normalizarMonto, hoyLocal } from '../utils/formato.js'
 import { obtenerGrupo } from '../services/grupos.js'
+import { MONEDAS } from '../utils/gastoFijo.js'
 import FormularioGastoCompartido from './FormularioGastoCompartido.vue'
 
 const props = defineProps({
@@ -20,6 +21,7 @@ const monto = ref(props.movimiento ? String(props.movimiento.monto).replace('.',
 const fecha = ref(props.movimiento?.fecha ?? hoy)
 const descripcion = ref(props.movimiento?.descripcion ?? '')
 const categoriaId = ref(props.movimiento?.categoriaId ?? '')
+const moneda = ref(props.movimiento?.moneda ?? 'ARS')
 const metaId = ref('')
 const error = ref('')
 const alcance = ref('personal')
@@ -51,6 +53,7 @@ function enviar() {
   emit('guardar', {
     tipo: tipo.value,
     monto: montoNormal,
+    moneda: moneda.value,
     fecha: fecha.value,
     descripcion: descripcion.value.trim() || null,
     categoriaId: categoriaId.value || null,
@@ -96,6 +99,11 @@ function enviar() {
     </label>
     <label>Monto
       <CampoMonto v-model="monto" name="monto" />
+    </label>
+    <label>Moneda
+      <select v-model="moneda" name="moneda">
+        <option v-for="m in MONEDAS" :key="m" :value="m">{{ m }}</option>
+      </select>
     </label>
     <label>Fecha
       <input v-model="fecha" name="fecha" type="date" />

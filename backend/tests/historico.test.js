@@ -110,9 +110,10 @@ test('serie de 3 meses en orden, con meses vacíos en ceros, parte propia compar
       { categoriaId: null, nombre: 'Sin categoría', monto: '20.00' },
     ],
     aportesMetas: '300.00',
+    porMoneda: [{ moneda: 'ARS', ingresos: '1000.00', gastos: '120.00', ahorroNeto: '880.00', aportesMetas: '300.00' }],
   });
   expect(res.body[1]).toEqual({
-    mes: '2026-02', ingresos: '0.00', gastos: '0.00', ahorroNeto: '0.00', gastosPorCategoria: [], aportesMetas: '0.00',
+    mes: '2026-02', ingresos: '0.00', gastos: '0.00', ahorroNeto: '0.00', gastosPorCategoria: [], aportesMetas: '0.00', porMoneda: [],
   });
   expect(res.body[2]).toMatchObject({
     ingresos: '10.00', gastos: '25.00', ahorroNeto: '-15.00',

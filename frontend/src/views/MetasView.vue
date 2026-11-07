@@ -6,6 +6,7 @@ import { ref, computed, onMounted } from 'vue'
 import BarraMeta from '../components/BarraMeta.vue'
 import { listarMetasPagina, crearMeta, eliminarMeta, registrarAporte } from '../services/metas.js'
 import { normalizarMonto, hoyLocal } from '../utils/formato.js'
+import { MONEDAS } from '../utils/gastoFijo.js'
 
 const hoy = hoyLocal()
 const metas = ref([])
@@ -14,6 +15,7 @@ const error = ref('')
 
 const nombre = ref('')
 const objetivo = ref('')
+const moneda = ref('ARS')
 const fechaLimite = ref('')
 
 // Estado del formulario de aporte por meta: { [id]: { tipo, monto, fecha } }
@@ -64,10 +66,12 @@ async function crear() {
     await crearMeta({
       nombre: nombre.value.trim(),
       montoObjetivo,
+      moneda: moneda.value,
       ...(fechaLimite.value ? { fechaLimite: fechaLimite.value } : {})
     })
     nombre.value = ''
     objetivo.value = ''
+    moneda.value = 'ARS'
     fechaLimite.value = ''
     await cargar()
   } catch (e) {
@@ -123,6 +127,11 @@ onMounted(cargar)
       <h2>Nueva meta</h2>
       <label>Nombre <input v-model="nombre" type="text" maxlength="100" /></label>
       <label>Objetivo <CampoMonto v-model="objetivo" /></label>
+      <label>Moneda
+        <select v-model="moneda" name="moneda">
+          <option v-for="m in MONEDAS" :key="m" :value="m">{{ m }}</option>
+        </select>
+      </label>
       <label>Fecha límite (opcional) <input v-model="fechaLimite" type="date" /></label>
       <button type="submit" class="primario">Crear meta</button>
     </form>
@@ -132,11 +141,11 @@ onMounted(cargar)
     <ul class="lista panel">
       <li v-for="m in metas" :key="m.id" class="item">
         <div class="cabecera">
-          <h2>{{ m.nombre }}</h2>
+          <h2>{{ m.nombre }} <span class="moneda">{{ m.moneda }}</span></h2>
           <button type="button" @click="eliminar(m)">Eliminar</button>
         </div>
         <p v-if="m.fechaLimite" class="limite">Fecha límite: {{ m.fechaLimite.split('-').reverse().join('/') }}</p>
-        <BarraMeta :monto-objetivo="m.montoObjetivo" :acumulado="m.acumulado" :porcentaje="m.porcentaje" :restante="m.restante" />
+        <BarraMeta :monto-objetivo="m.montoObjetivo" :acumulado="m.acumulado" :porcentaje="m.porcentaje" :restante="m.restante" :moneda="m.moneda" />
         <form class="form-grid aporte" novalidate @submit.prevent="aportar(m)">
           <label>Operación
             <select v-model="formAporte(m.id).tipo">
@@ -144,7 +153,7 @@ onMounted(cargar)
               <option value="retiro">Retiro</option>
             </select>
           </label>
-          <label>Monto <CampoMonto v-model="formAporte(m.id).monto" /></label>
+          <label>Monto en {{ m.moneda }} <CampoMonto v-model="formAporte(m.id).monto" /></label>
           <label>Fecha <input v-model="formAporte(m.id).fecha" type="date" /></label>
           <button type="submit">Registrar</button>
         </form>
@@ -171,4 +180,5 @@ h1 { font-size: 1.5rem; margin-top: 0; }
 .cabecera { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
 .cabecera h2 { font-size: 1.1rem; margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .limite { margin: 0 0 8px; font-size: 0.9rem; color: var(--texto-suave); }
+.moneda { font-size: 0.75rem; font-weight: 600; color: var(--texto-suave); border: 1px solid var(--borde); border-radius: 999px; padding: 1px 8px; vertical-align: middle; }
 </style>

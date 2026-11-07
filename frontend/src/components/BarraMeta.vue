@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { formatearMonto } from '../utils/formato.js'
+import { formatearMontoEn } from '../utils/formato.js'
 import { crecerBarra } from '../motion/movimiento.js'
 
 // porcentaje y restante vienen calculados por la API; acá solo se muestran.
@@ -8,7 +8,8 @@ const props = defineProps({
   montoObjetivo: { type: String, required: true },
   acumulado: { type: String, required: true },
   porcentaje: { type: Number, required: true },
-  restante: { type: String, required: true }
+  restante: { type: String, required: true },
+  moneda: { type: String, default: 'ARS' }
 })
 
 const porcentajeTexto = computed(() => String(props.porcentaje).replace('.', ','))
@@ -35,8 +36,8 @@ onMounted(() => crecerBarra(relleno.value, ancho.value))
     <p class="detalle">
       <strong>{{ porcentajeTexto }} %</strong>
       <span v-if="cumplida" class="etiqueta">Meta cumplida</span>
-      <span class="montos">{{ formatearMonto(acumulado) }} de {{ formatearMonto(montoObjetivo) }}</span>
-      <span class="montos">{{ formatearMonto(restante) }} restante</span>
+      <span class="montos">{{ formatearMontoEn(acumulado, moneda) }} de {{ formatearMontoEn(montoObjetivo, moneda) }}</span>
+      <span class="montos">{{ formatearMontoEn(restante, moneda) }} restante</span>
     </p>
   </div>
 </template>

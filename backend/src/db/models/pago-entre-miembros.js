@@ -9,6 +9,7 @@ const PagoEntreMiembros = sequelize.define(
     deudorId: { type: DataTypes.UUID, allowNull: false },
     acreedorId: { type: DataTypes.UUID, allowNull: false },
     monto: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+    moneda: { type: DataTypes.CHAR(3), allowNull: false, defaultValue: 'ARS' },
     fecha: { type: DataTypes.DATEONLY, allowNull: false },
     nota: { type: DataTypes.STRING(255), allowNull: true },
   },
