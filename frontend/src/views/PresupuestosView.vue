@@ -82,6 +82,7 @@ onMounted(async () => {
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
 
     <form class="form-pres panel" novalidate @submit.prevent="guardar">
+      <h2>Nuevo presupuesto</h2>
       <label>Mes <input v-model="mes" type="month" @change="cargar" /></label>
       <label>Categoría
         <select v-model="categoriaId">

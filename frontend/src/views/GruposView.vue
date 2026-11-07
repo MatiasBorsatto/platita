@@ -60,10 +60,12 @@ onMounted(cargar)
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
 
     <form class="form-grid panel" novalidate @submit.prevent="crear">
+      <h2>Crear un grupo</h2>
       <label>Nombre del grupo <input v-model="nombre" type="text" maxlength="100" /></label>
       <button type="submit" class="primario">Crear grupo</button>
     </form>
     <form class="form-grid panel" novalidate @submit.prevent="unirse">
+      <h2>Unirme con un código</h2>
       <label>Código de invitación <input v-model="codigo" type="text" maxlength="16" autocomplete="off" /></label>
       <button type="submit">Unirme</button>
     </form>

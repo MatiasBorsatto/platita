@@ -120,6 +120,7 @@ onMounted(cargar)
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
 
     <form class="form-grid panel" novalidate @submit.prevent="crear">
+      <h2>Nueva meta</h2>
       <label>Nombre <input v-model="nombre" type="text" maxlength="100" /></label>
       <label>Objetivo <CampoMonto v-model="objetivo" /></label>
       <label>Fecha límite (opcional) <input v-model="fechaLimite" type="date" /></label>

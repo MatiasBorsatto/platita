@@ -86,6 +86,7 @@ function enviar() {
     />
   </template>
   <form v-else class="form-mov panel" novalidate @submit.prevent="enviar">
+      <h2>Nuevo movimiento</h2>
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
     <label>Tipo
       <select v-model="tipo" name="tipo">

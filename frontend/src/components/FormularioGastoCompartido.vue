@@ -137,6 +137,7 @@ function enviar() {
 
 <template>
   <form class="form-comp" novalidate @submit.prevent="enviar">
+      <h2>Gasto compartido</h2>
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
     <label>Monto total
       <CampoMonto v-model="monto" name="monto" />
