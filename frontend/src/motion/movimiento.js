@@ -30,8 +30,18 @@ export function entrarPagina(el, done) {
   tras(250, done)
 }
 
+// La vista que sale se superpone a la nueva (posición absoluta, en su lugar) y se desvanece,
+// mientras la nueva entra. Se usa sin mode="out-in": ese modo dejaba la pantalla en blanco
+// al terminar la salida.
 export function salirPagina(el, done) {
   if (reducido()) return done()
+  Object.assign(el.style, {
+    position: 'absolute',
+    top: `${el.offsetTop}px`,
+    left: `${el.offsetLeft}px`,
+    width: `${el.offsetWidth}px`,
+    pointerEvents: 'none'
+  })
   animate(el, { opacity: [1, 0], transform: ['translateY(0px)', 'translateY(-8px)'] }, {
     duration: 0.18,
     ease: 'easeIn'

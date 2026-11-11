@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import { useSesion } from '../stores/sesion.js'
 import CampanaNotificaciones from './CampanaNotificaciones.vue'
 import IconosFlotantes from './IconosFlotantes.vue'
-import { entrarPagina } from '../motion/movimiento.js'
+import { entrarPagina, salirPagina } from '../motion/movimiento.js'
 import { onMounted } from 'vue'
 import TourGuiado from './TourGuiado.vue'
 import BotonAyuda from './BotonAyuda.vue'
@@ -16,11 +16,6 @@ const sesion = useSesion()
 onMounted(() => {
   if (sesion.usuario && !tourVisto(sesion.usuario.id)) setTimeout(() => iniciarTour(0), 700)
 })
-// Entrada animada de cada módulo al montarse (la vista anterior sale al instante).
-function animarVista(vnode) {
-  if (vnode.el instanceof Element) entrarPagina(vnode.el, () => {})
-}
-
 // Ruta pública (carpeta public/): dinámica para que Vite no la convierta en import.
 const logoUrl = '/logo.svg'
 
@@ -78,10 +73,13 @@ async function salir() {
     </nav>
     <main class="contenido">
       <IconosFlotantes />
-      <!-- Sin <Transition mode="out-in">: su ciclo de salida dejaba la pantalla en blanco al
-           cambiar de módulo (error "reading 'parentNode'"). La vista nueva se anima al montarse. -->
+      <!-- Sin mode="out-in": ese modo dejaba la pantalla en blanco al cambiar de módulo
+           (error "reading 'parentNode'"). La vista que sale se superpone y se desvanece
+           mientras entra la nueva. -->
       <RouterView v-slot="{ Component, route }">
-        <component :is="Component" :key="route.path" @vue:mounted="animarVista" />
+        <Transition :css="false" @enter="entrarPagina" @leave="salirPagina">
+          <component :is="Component" :key="route.path" />
+        </Transition>
       </RouterView>
     </main>
     <BotonAyuda />
