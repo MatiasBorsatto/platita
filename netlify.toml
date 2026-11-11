@@ -2,12 +2,14 @@
   command = "cd frontend && npm ci && npm run build"
   publish = "frontend/dist"
 
-# Las llamadas a la API van al backend en Render; el navegador sigue viendo un solo dominio
+# Las llamadas a la API van al backend del servidor propio, expuesto con ngrok; el navegador sigue viendo un solo dominio.
+# El encabezado evita la página de aviso que ngrok gratuito muestra a los navegadores.
 [[redirects]]
   from = "/api/*"
-  to = "https://finanzas-jaki.onrender.com/api/:splat"
+  to = "https://touched-woodcock-upright.ngrok-free.app/api/:splat"
   status = 200
   force = true
+  headers = {ngrok-skip-browser-warning = "true"}
 
 # Para que el router de Vue funcione al recargar cualquier ruta
 [[redirects]]
