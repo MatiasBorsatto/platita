@@ -95,7 +95,7 @@ function enviar() {
       @guardar="emit('guardar-compartido', { grupoId: grupoElegido.id, datos: $event })"
     />
   </template>
-  <form v-else class="form-mov panel" novalidate @submit.prevent="enviar">
+  <form v-else class="form-mov panel" novalidate data-tour="formulario-movimiento" @submit.prevent="enviar">
       <h2>Nuevo movimiento</h2>
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
     <label>Tipo

@@ -23,6 +23,7 @@ const ICONOS = {
 export const PASOS = [
   {
     id: 'bienvenida',
+    modulo: 'Inicio',
     icono: ICONOS.hola,
     titulo: '¡Bienvenido a Platita!',
     texto: 'En un minuto te mostramos todo lo que podés hacer. Podés avanzar con las flechas del teclado o con los botones.',
@@ -30,6 +31,7 @@ export const PASOS = [
   },
   {
     id: 'menu',
+    modulo: 'Navegación',
     objetivo: 'nav-principal',
     icono: ICONOS.menu,
     titulo: 'Tu menú',
@@ -37,6 +39,7 @@ export const PASOS = [
   },
   {
     id: 'mi-plata',
+    modulo: 'Movimientos',
     ruta: '/movimientos',
     objetivo: 'mi-plata',
     icono: ICONOS.plata,
@@ -45,8 +48,9 @@ export const PASOS = [
   },
   {
     id: 'cargar-movimiento',
+    modulo: 'Movimientos',
     ruta: '/movimientos',
-    objetivo: 'cargar-movimiento',
+    objetivo: 'formulario-movimiento',
     icono: ICONOS.cargar,
     titulo: 'Anotá cada ingreso o gasto',
     texto: 'Elegí si entró o salió plata, el monto y la fecha. Lo demás es opcional.',
@@ -54,6 +58,7 @@ export const PASOS = [
   },
   {
     id: 'lista-movimientos',
+    modulo: 'Movimientos',
     ruta: '/movimientos',
     objetivo: 'lista-movimientos',
     icono: ICONOS.lista,
@@ -62,6 +67,7 @@ export const PASOS = [
   },
   {
     id: 'categorias',
+    modulo: 'Movimientos',
     ruta: '/movimientos',
     objetivo: 'link-categorias',
     icono: ICONOS.etiqueta,
@@ -70,6 +76,7 @@ export const PASOS = [
   },
   {
     id: 'presupuestos',
+    modulo: 'Presupuestos',
     ruta: '/presupuestos',
     objetivo: 'nuevo-presupuesto',
     icono: ICONOS.presupuesto,
@@ -79,6 +86,7 @@ export const PASOS = [
   },
   {
     id: 'gastos-fijos',
+    modulo: 'Gastos fijos',
     ruta: '/gastos-fijos',
     objetivo: 'agregar-gasto-fijo',
     icono: ICONOS.fijos,
@@ -88,6 +96,7 @@ export const PASOS = [
   },
   {
     id: 'metas',
+    modulo: 'Metas',
     ruta: '/metas',
     objetivo: 'nueva-meta',
     icono: ICONOS.meta,
@@ -97,6 +106,7 @@ export const PASOS = [
   },
   {
     id: 'grupos',
+    modulo: 'Grupos',
     ruta: '/grupos',
     objetivo: 'grupos-acciones',
     icono: ICONOS.grupo,
@@ -105,6 +115,7 @@ export const PASOS = [
   },
   {
     id: 'estadisticas',
+    modulo: 'Estadísticas',
     ruta: '/estadisticas',
     objetivo: 'resumen-mes',
     icono: ICONOS.grafico,
@@ -113,6 +124,7 @@ export const PASOS = [
   },
   {
     id: 'deudas',
+    modulo: 'Deudas',
     ruta: '/deudas',
     objetivo: 'deudas',
     icono: ICONOS.deuda,
@@ -121,6 +133,7 @@ export const PASOS = [
   },
   {
     id: 'control-parental',
+    modulo: 'Control parental',
     ruta: '/control-parental',
     objetivo: 'control-parental',
     icono: ICONOS.escudo,
@@ -129,6 +142,7 @@ export const PASOS = [
   },
   {
     id: 'notificaciones',
+    modulo: 'Avisos',
     objetivo: 'campana',
     icono: ICONOS.campana,
     titulo: 'Avisos',
@@ -136,6 +150,7 @@ export const PASOS = [
   },
   {
     id: 'ayuda',
+    modulo: 'Ayuda',
     objetivo: 'boton-ayuda',
     icono: ICONOS.ayuda,
     titulo: '¿Te olvidaste de algo?',
@@ -143,6 +158,7 @@ export const PASOS = [
   },
   {
     id: 'fin',
+    modulo: 'Final',
     ruta: '/movimientos',
     icono: ICONOS.listo,
     titulo: '¡Listo para empezar!',
