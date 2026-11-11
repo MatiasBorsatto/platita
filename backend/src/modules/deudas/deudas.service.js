@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { CuotaGastoFijo, GastoFijo, MiembroGrupo } = require('../../db/models');
+const { CuotaGastoFijo, GastoFijo, MiembroGrupo, ConceptoGastoFijo } = require('../../db/models');
 const { sumar } = require('../../utils/dinero');
 const { hoyBA } = require('../../utils/fechas');
 const { puede } = require('../autorizacion/autorizacion.service');
@@ -21,13 +21,22 @@ async function listarDeudas(usuarioId) {
       where: grupoIds.length
         ? { [Op.or]: [{ usuarioId }, { ambito: 'grupo', grupoId: grupoIds }] }
         : { usuarioId },
+    }, {
+      model: ConceptoGastoFijo,
+      as: 'concepto',
+      required: true,
+      attributes: ['cuotas'],
     }],
     order: [['fechaVencimiento', 'ASC'], ['id', 'ASC']],
   });
 
+  const mesHoy = hoy.slice(0, 7);
   const visibles = [];
   for (const c of cuotas) {
     const gasto = c.GastoFijo;
+    // Un gasto recurrente todavía no es deuda en meses futuros, aunque ya exista la cuota
+    // porque alguien consultó ese mes. Las cuotas de un concepto finito sí lo son.
+    if (c.concepto.cuotas === null && c.mes > mesHoy) continue;
     if (gasto.usuarioId !== usuarioId) {
       // Gasto de otro integrante del grupo: solo si este usuario puede ver los gastos del grupo.
       if (!(await puede(usuarioId, PERMISOS.GASTOS_VER_GRUPO, { grupoId: gasto.grupoId }))) continue;

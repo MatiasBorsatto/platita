@@ -13,7 +13,7 @@ import {
   listarCategorias, dineroActual
 } from '../services/movimientos.js'
 import { listarRecordatorios, pagarCuota } from '../services/gastos-fijos.js'
-import { formatearMonto } from '../utils/formato.js'
+import { formatearMonto, formatearMontoEn } from '../utils/formato.js'
 
 const LIMITE = 20
 const movimientos = ref([])
@@ -186,6 +186,11 @@ onMounted(async () => {
           <span>Ingresos: <strong>{{ formatear(dinero.ingresos) }}</strong></span>
           <span>Gastos personales: <strong>{{ formatear(dinero.gastosPersonales) }}</strong></span>
           <span>Aportes a gastos compartidos: <strong>{{ formatear(dinero.gastosCompartidos) }}</strong></span>
+        </div>
+        <div v-for="m in (dinero.porMoneda ?? []).filter((x) => x.moneda !== 'ARS')" :key="m.moneda" class="detalle" data-otra-moneda>
+          <span>{{ m.moneda }}: <strong>{{ formatearMontoEn(m.dineroActual, m.moneda) }}</strong></span>
+          <span>Ingresos: <strong>{{ formatearMontoEn(m.ingresos, m.moneda) }}</strong></span>
+          <span>Gastos: <strong>{{ formatearMontoEn(m.gastos, m.moneda) }}</strong></span>
         </div>
         <small class="suave">Fecha de corte: {{ dinero.fechaCorte }}</small>
       </div>

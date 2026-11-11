@@ -1,6 +1,6 @@
 <script setup>
 import CampoMonto from './CampoMonto.vue'
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { normalizarMonto, hoyLocal } from '../utils/formato.js'
 import { obtenerGrupo } from '../services/grupos.js'
 import { MONEDAS } from '../utils/gastoFijo.js'
@@ -23,6 +23,13 @@ const descripcion = ref(props.movimiento?.descripcion ?? '')
 const categoriaId = ref(props.movimiento?.categoriaId ?? '')
 const moneda = ref(props.movimiento?.moneda ?? 'ARS')
 const metaId = ref('')
+// El backend solo acepta metas propias y de la misma moneda que el movimiento.
+const metasDisponibles = computed(() =>
+  props.metas.filter((m) => (m.moneda ?? 'ARS') === moneda.value && (!props.usuarioId || !m.usuarioId || m.usuarioId === props.usuarioId))
+)
+watch(metasDisponibles, (lista) => {
+  if (metaId.value && !lista.some((m) => m.id === metaId.value)) metaId.value = ''
+})
 const error = ref('')
 const alcance = ref('personal')
 const grupoId = ref('')
@@ -114,10 +121,10 @@ function enviar() {
         <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nombre }}</option>
       </select>
     </label>
-    <label v-if="!movimiento && metas.length > 0">Meta (opcional)
+    <label v-if="!movimiento && metasDisponibles.length > 0">Meta (opcional)
       <select v-model="metaId" name="metaId">
         <option value="">Sin meta</option>
-        <option v-for="m in metas" :key="m.id" :value="m.id">{{ m.nombre }}</option>
+        <option v-for="m in metasDisponibles" :key="m.id" :value="m.id">{{ m.nombre }}</option>
       </select>
     </label>
     <label>Descripción

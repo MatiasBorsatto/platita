@@ -1,4 +1,4 @@
-const { Op } = require('sequelize');
+const { Op, fn, col } = require('sequelize');
 const { sequelize } = require('../../db/sequelize');
 const { Movimiento, Categoria, AporteMeta, AporteGasto } = require('../../db/models');
 const metasService = require('../metas/metas.service');
@@ -35,6 +35,13 @@ async function verificarCategoriasDe(pares) {
   }
 }
 
+// Un movimiento solo aporta a una meta de su misma moneda: no hay conversión.
+function exigirMismaMoneda(monedaMovimiento, monedaMeta) {
+  if (monedaMovimiento !== monedaMeta) {
+    throw new ErrorValidacion(`La meta es en ${monedaMeta} y el movimiento en ${monedaMovimiento}`);
+  }
+}
+
 async function obtenerPropio(usuarioId, id) {
   const mov = await Movimiento.findOne({ where: { id, usuarioId, alcance: 'personal' } });
   if (!mov) throw new ErrorNoEncontrado('Movimiento no encontrado');
@@ -49,7 +56,8 @@ async function crearMovimiento(usuarioId, datos) {
   if (!datos.metaId) return Movimiento.create({ ...datos, usuarioId, alcance: 'personal' });
 
   // Con metaId, el aporte a la meta se crea en la misma transacción que el movimiento.
-  await metasService.obtenerPropia(usuarioId, datos.metaId);
+  const meta = await metasService.obtenerPropia(usuarioId, datos.metaId);
+  exigirMismaMoneda(datos.moneda ?? 'ARS', meta.moneda);
   return sequelize.transaction(async (transaction) => {
     const mov = await Movimiento.create({ ...datos, usuarioId, alcance: 'personal' }, { transaction });
     await metasService.registrarAporteDeMovimiento(usuarioId, mov, transaction);
@@ -66,6 +74,10 @@ async function editarMovimiento(usuarioId, id, datos) {
     return mov;
   }
   // Con meta, el aporte vinculado se actualiza en la misma transacción (gasto retira, ingreso suma).
+  if (datos.moneda !== undefined) {
+    const meta = await metasService.obtenerPropia(usuarioId, mov.metaId);
+    exigirMismaMoneda(datos.moneda, meta.moneda);
+  }
   return sequelize.transaction(async (transaction) => {
     Object.assign(mov, datos);
     await mov.save({ transaction });
@@ -110,32 +122,55 @@ function centavosDeSuma(valor) {
   return BigInt(entero || '0') * 100n + BigInt((decimal + '00').slice(0, 2));
 }
 
+const conSigno = (c) => (c < 0n ? `-${deCentavos(-c)}` : deCentavos(c));
+
 // Mi plata: ingresos personales - gastos personales - aportes reales a gastos compartidos.
 // Los movimientos con fecha futura todavía no afectan el dinero disponible.
+// Nunca se mezclan monedas: los campos de primer nivel son en pesos y cada moneda va en porMoneda.
 async function dineroActual(usuarioId) {
   const hoy = hoyBA();
   const hastaHoy = { [Op.lte]: hoy };
-  const [ingresos, gastosPersonales, gastosCompartidos] = await Promise.all([
-    Movimiento.sum('monto', {
-      where: { usuarioId, alcance: 'personal', tipo: 'ingreso', fecha: hastaHoy },
+  const [sumas, aportes] = await Promise.all([
+    Movimiento.findAll({
+      attributes: ['moneda', 'tipo', [fn('SUM', col('monto')), 'total']],
+      where: { usuarioId, alcance: 'personal', tipo: ['ingreso', 'gasto'], fecha: hastaHoy },
+      group: ['moneda', 'tipo'],
+      raw: true,
     }),
-    Movimiento.sum('monto', {
-      where: { usuarioId, alcance: 'personal', tipo: 'gasto', fecha: hastaHoy },
+    AporteGasto.findAll({
+      attributes: ['monto'],
+      where: { usuarioId, fecha: hastaHoy },
+      include: [{ model: Movimiento, attributes: ['moneda'], required: true }],
     }),
-    AporteGasto.sum('monto', { where: { usuarioId, fecha: hastaHoy } }),
   ]);
-  const ing = centavosDeSuma(ingresos);
-  const gasPersonales = centavosDeSuma(gastosPersonales);
-  const gasCompartidos = centavosDeSuma(gastosCompartidos);
-  const gastos = gasPersonales + gasCompartidos;
-  return {
-    dineroActual: deCentavos(ing - gastos),
-    ingresos: deCentavos(ing),
-    gastos: deCentavos(gastos),
-    gastosPersonales: deCentavos(gasPersonales),
-    gastosCompartidos: deCentavos(gasCompartidos),
-    fechaCorte: hoy,
+
+  const porMoneda = new Map();
+  const de = (moneda) => {
+    if (!porMoneda.has(moneda)) porMoneda.set(moneda, { ing: 0n, personales: 0n, compartidos: 0n });
+    return porMoneda.get(moneda);
   };
+  for (const s of sumas) {
+    if (s.tipo === 'ingreso') de(s.moneda).ing += centavosDeSuma(s.total);
+    else de(s.moneda).personales += centavosDeSuma(s.total);
+  }
+  for (const a of aportes) de(a.Movimiento.moneda).compartidos += centavosDeSuma(a.monto);
+  de('ARS');
+
+  const resumen = (moneda) => {
+    const { ing, personales, compartidos } = porMoneda.get(moneda);
+    const gastos = personales + compartidos;
+    return {
+      moneda,
+      dineroActual: conSigno(ing - gastos),
+      ingresos: deCentavos(ing),
+      gastos: deCentavos(gastos),
+      gastosPersonales: deCentavos(personales),
+      gastosCompartidos: deCentavos(compartidos),
+    };
+  };
+  const monedas = [...porMoneda.keys()].sort((a, b) => (a === 'ARS' ? -1 : b === 'ARS' ? 1 : a.localeCompare(b)));
+  const { moneda, ...pesos } = resumen('ARS');
+  return { ...pesos, fechaCorte: hoy, porMoneda: monedas.map(resumen) };
 }
 
 module.exports = {

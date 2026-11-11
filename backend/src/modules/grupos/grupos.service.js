@@ -20,8 +20,15 @@ async function codigoLibre() {
   throw new Error('No se pudo generar un código único');
 }
 
+// El código de invitación solo lo ve un admin, igual que en obtenerGrupo.
 function dto(grupo, rol) {
-  return { id: grupo.id, nombre: grupo.nombre, codigo: grupo.codigo, creadoPor: grupo.creadoPor, rol };
+  return {
+    id: grupo.id,
+    nombre: grupo.nombre,
+    ...(rol === 'admin' ? { codigo: grupo.codigo } : {}),
+    creadoPor: grupo.creadoPor,
+    rol,
+  };
 }
 
 async function crearGrupo(usuarioId, nombre) {

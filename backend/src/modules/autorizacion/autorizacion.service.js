@@ -10,8 +10,10 @@ async function clasificacionDe(usuarioId) {
   return clasificar(usuario?.fechaNacimiento ?? null, hoyBA().slice(0, 10));
 }
 
-// Decide si un usuario puede ejercer un permiso. Un menor lo tiene solo si algún tutor vinculado
-// (dentro del grupo indicado, si se pasa) lo concedió explícitamente.
+// Decide si un usuario puede ejercer un permiso.
+// - Adulto: todo.
+// - Menor sin ningún tutor vinculado: solo funciones personales (nada familiar ni de tarjetas).
+// - Menor con tutor: solo lo que algún tutor (del grupo indicado, si se pasa) concedió explícitamente.
 async function puede(usuarioId, permiso, { grupoId = null } = {}) {
   if (!TODOS.includes(permiso)) throw new ErrorValidacion(`Permiso desconocido: ${permiso}`);
   const clase = await clasificacionDe(usuarioId);
@@ -19,12 +21,12 @@ async function puede(usuarioId, permiso, { grupoId = null } = {}) {
   if (clase === 'sin_fecha') return !FAMILIARES.includes(permiso);
   if (TARJETAS.includes(permiso)) return false;
 
-  const where = { menorId: usuarioId };
-  if (grupoId) where.grupoId = grupoId;
-  const vinculos = await VinculoTutor.findAll({ where, attributes: ['id'] });
-  if (vinculos.length === 0) return false;
+  const vinculos = await VinculoTutor.findAll({ where: { menorId: usuarioId }, attributes: ['id', 'grupoId'] });
+  if (vinculos.length === 0) return !FAMILIARES.includes(permiso);
+  const aplicables = grupoId ? vinculos.filter((v) => v.grupoId === grupoId) : vinculos;
+  if (aplicables.length === 0) return false;
   const concedidos = await PermisoMenor.count({
-    where: { vinculoId: vinculos.map((v) => v.id), permiso, permitido: true },
+    where: { vinculoId: aplicables.map((v) => v.id), permiso, permitido: true },
   });
   return concedidos > 0;
 }

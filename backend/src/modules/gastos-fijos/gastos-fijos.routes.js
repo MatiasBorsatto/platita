@@ -10,6 +10,7 @@ const { exigir, clasificacionDe } = require('../autorizacion/autorizacion.servic
 const { PERMISOS } = require('../autorizacion/permisos');
 const { GastoFijo, MiembroGrupo } = require('../../db/models');
 const { ErrorNoEncontrado } = require('../../utils/errores');
+const { requierePermiso } = require('../../middlewares/requierePermiso');
 
 // Permiso según el tipo de pago: los gastos con tarjeta tienen permisos propios, que un menor nunca obtiene.
 function permisoPara(tipoPago, accion) {
@@ -64,7 +65,14 @@ router.param('cuotaId', (req, res, next, valor) => {
 
 const mesDeQuery = (query) => (query.mes === undefined ? hoyBA().slice(0, 7) : validarMes(query.mes));
 
-router.get('/', async (req, res) => {
+// Ver cualquier gasto fijo exige el permiso de ver. Tocar conceptos o pagar cuotas es editar el gasto.
+const ver = requierePermiso(PERMISOS.GASTOS_FIJOS_VER);
+const editarExistente = async (req, res, next) => {
+  await exigirSobreGastoExistente(req.usuario.id, req.params.id, undefined, 'editar');
+  next();
+};
+
+router.get('/', ver, async (req, res) => {
   const lista = await respuestaSegunClase(req.usuario.id, await service.listarGastosFijos(req.usuario.id));
   res.json(paginar(lista, req.query));
 });
@@ -76,15 +84,15 @@ router.post('/', async (req, res) => {
   res.status(201).json(await service.crearGastoFijo(req.usuario.id, datos));
 });
 
-router.get('/vencimientos', async (req, res) => {
+router.get('/vencimientos', ver, async (req, res) => {
   res.json(await service.listarVencimientos(req.usuario.id, mesDeQuery(req.query)));
 });
 
-router.get('/recordatorios', async (req, res) => {
+router.get('/recordatorios', ver, async (req, res) => {
   res.json(await service.recordatorios(req.usuario.id));
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', ver, async (req, res) => {
   const mes = req.query.mes === undefined ? null : validarMes(req.query.mes);
   res.json(await respuestaSegunClase(req.usuario.id, await service.obtenerGastoFijo(req.usuario.id, req.params.id, mes)));
 });
@@ -100,13 +108,13 @@ router.delete('/:id', async (req, res) => {
   res.json(await service.eliminarGastoFijo(req.usuario.id, req.params.id));
 });
 
-router.post('/:id/conceptos', async (req, res) => {
+router.post('/:id/conceptos', editarExistente, async (req, res) => {
   res
     .status(201)
     .json(await service.crearConcepto(req.usuario.id, req.params.id, validarConcepto(req.body)));
 });
 
-router.patch('/:id/conceptos/:conceptoId', async (req, res) => {
+router.patch('/:id/conceptos/:conceptoId', editarExistente, async (req, res) => {
   res.json(
     await service.editarConcepto(
       req.usuario.id,
@@ -117,17 +125,17 @@ router.patch('/:id/conceptos/:conceptoId', async (req, res) => {
   );
 });
 
-router.delete('/:id/conceptos/:conceptoId', async (req, res) => {
+router.delete('/:id/conceptos/:conceptoId', editarExistente, async (req, res) => {
   res.json(await service.eliminarConcepto(req.usuario.id, req.params.id, req.params.conceptoId));
 });
 
-router.post('/:id/cuotas/:cuotaId/pagar', async (req, res) => {
+router.post('/:id/cuotas/:cuotaId/pagar', editarExistente, async (req, res) => {
   res.json(
     await service.pagarCuota(req.usuario.id, req.params.id, req.params.cuotaId, validarPago(req.body))
   );
 });
 
-router.post('/:id/cuotas/:cuotaId/deshacer-pago', async (req, res) => {
+router.post('/:id/cuotas/:cuotaId/deshacer-pago', editarExistente, async (req, res) => {
   res.json(await service.deshacerPago(req.usuario.id, req.params.id, req.params.cuotaId));
 });
 

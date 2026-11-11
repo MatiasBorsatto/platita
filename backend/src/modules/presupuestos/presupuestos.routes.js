@@ -5,8 +5,13 @@ const { ErrorValidacion } = require('../../utils/errores');
 const { validarMes, validarUuid } = require('../movimientos/movimientos.validation');
 const service = require('./presupuestos.service');
 
+const { requierePermiso } = require('../../middlewares/requierePermiso');
+const { PERMISOS } = require('../autorizacion/permisos');
+
 const router = Router();
 router.use(autenticar);
+// No hay un permiso aparte para administrar presupuestos: quien no puede verlos tampoco los cambia.
+router.use(requierePermiso(PERMISOS.PRESUPUESTOS_VER));
 
 function mesRequerido(query) {
   if (query.mes === undefined) throw new ErrorValidacion('El mes es obligatorio');

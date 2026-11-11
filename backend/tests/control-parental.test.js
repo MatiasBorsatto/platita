@@ -101,10 +101,32 @@ describe('control parental', () => {
     expect(res.status).toBe(400);
   });
 
-  test('desvincular quita los permisos: el menor ya no puede crear el gasto', async () => {
+  test('desvincular quita los permisos familiares; sin tutor, el menor conserva solo lo personal', async () => {
     const res = await tutor.agent.delete(`/api/control-parental/menores/${menor.id}?grupoId=${grupoId}`);
     expect(res.status).toBe(200);
-    const gasto = await menor.agent.post('/api/gastos-fijos').send({ nombre: 'Luz', diaVencimiento: 5 });
-    expect(gasto.status).toBe(403);
+    const gastoGrupo = await menor.agent.get(`/api/grupos/${grupoId}/gastos`);
+    expect(gastoGrupo.status).toBe(403);
+    const personal = await menor.agent.post('/api/gastos-fijos').send({ nombre: 'Luz', diaVencimiento: 5 });
+    expect(personal.status).toBe(201);
+  });
+
+  test('con tutor vinculado, el menor solo usa lo que el tutor concedió', async () => {
+    await tutor.agent.post('/api/control-parental/vinculos').send({ grupoId, email: menor.email });
+    expect((await menor.agent.get('/api/movimientos')).status).toBe(403);
+    expect((await menor.agent.get('/api/estadisticas/mensual?mes=2026-11')).status).toBe(403);
+    expect((await menor.agent.get(`/api/grupos/${grupoId}/gastos`)).status).toBe(403);
+    const concedido = await tutor.agent
+      .patch(`/api/control-parental/menores/${menor.id}/permisos`)
+      .send({ grupoId, permisos: { 'movimientos.ver': true, 'gastos.ver_grupo': true } });
+    expect(concedido.status).toBe(200);
+    expect((await menor.agent.get('/api/movimientos')).status).toBe(200);
+    expect((await menor.agent.get(`/api/grupos/${grupoId}/gastos`)).status).toBe(200);
+  });
+
+  test('el código del grupo no llega a quien no es administrador', async () => {
+    const lista = await menor.agent.get('/api/grupos');
+    const grupo = lista.body.find((g) => g.id === grupoId);
+    expect(grupo).toBeDefined();
+    expect(grupo.codigo).toBeUndefined();
   });
 });

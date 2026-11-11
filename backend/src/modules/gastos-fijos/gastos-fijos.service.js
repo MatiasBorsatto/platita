@@ -511,6 +511,7 @@ async function pagarCuota(usuarioId, gastoFijoId, cuotaId, { fecha } = {}) {
         tipo: 'gasto',
         alcance: 'personal',
         monto: cuota.monto,
+        moneda: gasto.moneda,
         fecha: fechaPago,
         descripcion,
         categoriaId: gasto.categoriaId,

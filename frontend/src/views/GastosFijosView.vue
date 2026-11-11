@@ -7,7 +7,7 @@ import CargandoIndicador from '../components/CargandoIndicador.vue'
 import { confirmar } from '../services/dialogo.js'
 import { listarCategorias } from '../services/categorias.js'
 import { listarGastosFijos, crearGastoFijo, eliminarGastoFijo } from '../services/gastos-fijos.js'
-import { formatearMonto, aCentavos, deCentavos } from '../utils/formato.js'
+import { formatearMonto, formatearMontoEn, aCentavos, deCentavos } from '../utils/formato.js'
 
 const router = useRouter()
 const gastos = ref([])
@@ -32,9 +32,15 @@ const alias = ref('')
 const nombreCategoria = (id) => categorias.value.find((c) => c.id === id)?.nombre ?? 'Sin categoría'
 const diaValido = (v) => /^\d+$/.test(String(v).trim()) && Number(v) >= 1 && Number(v) <= 31
 
-const totalMes = computed(() =>
-  deCentavos(gastos.value.reduce((acc, g) => acc + aCentavos(g.resumen?.totalMes ?? '0.00'), 0n))
-)
+// Un total por moneda: nunca se suman pesos con dólares.
+const totalesMes = computed(() => {
+  const porMoneda = new Map()
+  for (const g of gastos.value) {
+    const moneda = g.moneda ?? 'ARS'
+    porMoneda.set(moneda, (porMoneda.get(moneda) ?? 0n) + aCentavos(g.resumen?.totalMes ?? '0.00'))
+  }
+  return [...porMoneda].map(([moneda, centavos]) => ({ moneda, total: deCentavos(centavos) }))
+})
 
 function descripcionConcepto(c) {
   const monto = formatearMonto(c.montoCuota)
@@ -200,7 +206,9 @@ onMounted(async () => {
     <p v-else-if="!gastos.length" class="vacio">Todavía no cargaste gastos fijos.</p>
 
     <template v-else>
-      <p class="resumen-mes">Total estimado de este mes: <strong>{{ formatearMonto(totalMes) }}</strong></p>
+      <p class="resumen-mes">Total estimado de este mes:
+        <template v-for="(t, i) in totalesMes" :key="t.moneda">{{ i ? ' · ' : '' }}<strong>{{ formatearMontoEn(t.total, t.moneda) }}</strong></template>
+      </p>
       <ul class="lista">
         <li v-for="g in gastos" :key="g.id" class="item panel" data-gasto-fijo>
           <div class="fila-cabecera">
@@ -209,7 +217,7 @@ onMounted(async () => {
               <p class="suave">Vence el día {{ g.diaVencimiento }} · {{ nombreCategoria(g.categoriaId) }}</p>
             </div>
             <div class="monto-mes">
-              <strong>{{ formatearMonto(g.resumen?.totalMes ?? '0.00') }}</strong>
+              <strong>{{ formatearMontoEn(g.resumen?.totalMes ?? '0.00', g.moneda) }}</strong>
               <small>este mes</small>
             </div>
           </div>

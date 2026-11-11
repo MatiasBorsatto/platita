@@ -5,8 +5,12 @@ const { validarMes } = require('../movimientos/movimientos.validation');
 const service = require('./estadisticas.service');
 const historico = require('./historico.service');
 
+const { requierePermiso } = require('../../middlewares/requierePermiso');
+const { PERMISOS } = require('../autorizacion/permisos');
+
 const router = Router();
 router.use(autenticar);
+router.use(requierePermiso(PERMISOS.ESTADISTICAS_VER));
 
 router.get('/mensual', async (req, res) => {
   if (req.query.mes === undefined) throw new ErrorValidacion('El mes es obligatorio');

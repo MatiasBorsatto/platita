@@ -5,6 +5,11 @@ const { validarUuid, validarFecha } = require('../movimientos/movimientos.valida
 const { validarMonto } = require('../../utils/dinero');
 const { ErrorValidacion } = require('../../utils/errores');
 const service = require('./saldos.service');
+const { requierePermiso } = require('../../middlewares/requierePermiso');
+const { PERMISOS } = require('../autorizacion/permisos');
+
+const verGastos = requierePermiso(PERMISOS.GASTOS_VER_GRUPO, { porGrupo: true });
+const crearGastos = requierePermiso(PERMISOS.GASTOS_CREAR_GRUPO, { porGrupo: true });
 
 const router = Router();
 router.use(autenticar);
@@ -31,15 +36,15 @@ function validarPago(body = {}) {
   };
 }
 
-router.get('/:id/saldos', grupoAccesible(), async (req, res) => {
+router.get('/:id/saldos', grupoAccesible(), verGastos, async (req, res) => {
   res.json(await service.saldosDelGrupo(req.usuario.id, req.grupoId));
 });
 
-router.post('/:id/pagos', grupoAccesible(), async (req, res) => {
+router.post('/:id/pagos', grupoAccesible(), crearGastos, async (req, res) => {
   res.status(201).json(await service.registrarPago(req.usuario.id, req.grupoId, validarPago(req.body)));
 });
 
-router.get('/:id/pagos', grupoAccesible(), async (req, res) => {
+router.get('/:id/pagos', grupoAccesible(), verGastos, async (req, res) => {
   res.json(await service.listarPagos(req.grupoId));
 });
 
