@@ -131,7 +131,7 @@ onMounted(async () => {
         <h1>Gastos fijos</h1>
         <p class="suave">Tus servicios y cuotas de todos los meses.</p>
       </div>
-      <button type="button" class="primario" data-agregar @click="abrirFormulario">Agregar gasto fijo</button>
+      <button type="button" class="primario" data-agregar data-tour="agregar-gasto-fijo" @click@click="abrirFormulario">Agregar gasto fijo</button>
     </div>
 
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>

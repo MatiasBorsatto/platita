@@ -62,7 +62,7 @@ onMounted(cargar)
 </script>
 
 <template>
-  <div class="campana-contenedor">
+  <div class="campana-contenedor" data-tour="campana">
     <button
       ref="boton"
       class="campana"

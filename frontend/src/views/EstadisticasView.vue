@@ -101,13 +101,14 @@ onMounted(() => {
 <template>
   <section class="estadisticas">
     <h1>Estadísticas</h1>
+    <p class="intro-modulo">Mirá cuánto entró, cuánto salió y en qué categorías se fue la plata, mes a mes.</p>
     <label class="selector-moneda">Moneda
       <select v-model="moneda" name="moneda">
         <option v-for="m in monedasDisponibles" :key="m" :value="m">{{ m }}</option>
       </select>
     </label>
 
-    <section aria-labelledby="titulo-mes" class="bloque">
+    <section aria-labelledby="titulo-mes" class="bloque" data-tour="resumen-mes">
       <h2 id="titulo-mes">Resumen del mes</h2>
       <label class="campo">Mes
         <input v-model="mes" type="month" @change="cargarMes" />

@@ -4,9 +4,18 @@ import { useSesion } from '../stores/sesion.js'
 import CampanaNotificaciones from './CampanaNotificaciones.vue'
 import IconosFlotantes from './IconosFlotantes.vue'
 import { entrarPagina, salirPagina } from '../motion/movimiento.js'
+import { onMounted } from 'vue'
+import TourGuiado from './TourGuiado.vue'
+import BotonAyuda from './BotonAyuda.vue'
+import { iniciarTour, tourVisto } from '../services/tour.js'
 
 const router = useRouter()
 const sesion = useSesion()
+
+// En el primer ingreso de cada usuario (en este navegador) el recorrido arranca solo.
+onMounted(() => {
+  if (sesion.usuario && !tourVisto(sesion.usuario.id)) setTimeout(() => iniciarTour(0), 700)
+})
 // Ruta pública (carpeta public/): dinámica para que Vite no la convierta en import.
 const logoUrl = '/logo.svg'
 
@@ -43,7 +52,7 @@ async function salir() {
 
 <template>
   <div class="layout">
-    <nav class="navegacion" aria-label="Principal">
+    <nav class="navegacion" aria-label="Principal" data-tour="nav-principal">
       <div class="marca">
         <img class="logo" :src="logoUrl" alt="" width="34" height="34" />
         <strong>Platita</strong>
@@ -70,6 +79,8 @@ async function salir() {
         </Transition>
       </RouterView>
     </main>
+    <BotonAyuda />
+    <TourGuiado />
   </div>
 </template>
 

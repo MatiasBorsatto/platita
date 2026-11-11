@@ -79,9 +79,10 @@ onMounted(async () => {
 <template>
   <section>
     <h1>Presupuestos</h1>
+    <p class="intro-modulo">Definí cuánto querés gastar como máximo por categoría cada mes. Te avisamos al llegar al 80 % y si te pasás.</p>
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
 
-    <form class="form-pres panel" novalidate @submit.prevent="guardar">
+    <form class="form-pres panel" data-tour="nuevo-presupuesto" novalidate @submit.prevent="guardar">
       <h2>Nuevo presupuesto</h2>
       <label>Mes <input v-model="mes" type="month" @change="cargar" /></label>
       <label>Categoría

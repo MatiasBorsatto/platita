@@ -57,21 +57,24 @@ onMounted(cargar)
 <template>
   <section>
     <h1>Grupos</h1>
+    <p class="intro-modulo">Compartí gastos con tu familia o amigos. Cada uno carga lo que pagó y la app calcula quién le debe a quién.</p>
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
 
-    <form class="form-grid panel" novalidate @submit.prevent="crear">
-      <h2>Crear un grupo</h2>
-      <label>Nombre del grupo <input v-model="nombre" type="text" maxlength="100" /></label>
-      <button type="submit" class="primario">Crear grupo</button>
-    </form>
-    <form class="form-grid panel" novalidate @submit.prevent="unirse">
-      <h2>Unirme con un código</h2>
-      <label>Código de invitación <input v-model="codigo" type="text" maxlength="16" autocomplete="off" /></label>
-      <button type="submit">Unirme</button>
-    </form>
+    <div class="acciones-grupo" data-tour="grupos-acciones">
+      <form class="form-grid panel" novalidate @submit.prevent="crear">
+        <h2>Crear un grupo</h2>
+        <label>Nombre del grupo <input v-model="nombre" type="text" maxlength="100" /></label>
+        <button type="submit" class="primario">Crear grupo</button>
+      </form>
+      <form class="form-grid panel" novalidate @submit.prevent="unirse">
+        <h2>Unirme con un código</h2>
+        <label>Código de invitación <input v-model="codigo" type="text" maxlength="16" autocomplete="off" /></label>
+        <button type="submit">Unirme</button>
+      </form>
+    </div>
 
     <CargandoIndicador v-if="cargando" variante="esqueleto" />
-    <p v-else-if="grupos.length === 0">Todavía no estás en ningún grupo.</p>
+    <p v-else-if="grupos.length === 0" class="vacio">Todavía no estás en ningún grupo. Creá uno arriba o pedile el código a quien ya tenga uno.</p>
     <ul class="lista panel">
       <li v-for="g in grupos" :key="g.id" class="item">
         <RouterLink :to="`/grupos/${g.id}`">{{ g.nombre }}</RouterLink>

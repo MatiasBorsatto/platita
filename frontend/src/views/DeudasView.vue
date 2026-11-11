@@ -32,11 +32,12 @@ const mostrar = (monto, moneda) => `${moneda} ${formatearMonto(monto).replace(/^
 <template>
   <section>
     <h1>Deudas</h1>
+    <p class="intro-modulo">Las cuotas de tus gastos fijos que todavía no pagaste. Las vencidas aparecen marcadas en rojo.</p>
     <p v-if="error" class="error-form" role="alert">{{ error }}</p>
     <CargandoIndicador v-if="cargando" variante="esqueleto" />
 
     <template v-if="!cargando && !error">
-      <section class="panel" aria-labelledby="titulo-totales">
+      <section class="panel" aria-labelledby="titulo-totales" data-tour="deudas">
         <h2 id="titulo-totales">Totales por moneda</h2>
         <p v-if="totales.length === 0">No tenés deudas pendientes.</p>
         <dl v-else class="totales">

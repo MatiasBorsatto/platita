@@ -90,7 +90,7 @@ const textoAccion = (a) => {
     <p v-if="error" class="error-form" role="alert">{{ error }}</p>
     <div v-if="aviso" class="aviso" role="status">{{ aviso }}</div>
 
-    <section class="panel agregar" aria-labelledby="titulo-agregar">
+    <section class="panel agregar" aria-labelledby="titulo-agregar" data-tour="control-parental">
       <h2 id="titulo-agregar">Vincular un menor</h2>
       <label>Grupo
         <select v-model="grupoNuevo">

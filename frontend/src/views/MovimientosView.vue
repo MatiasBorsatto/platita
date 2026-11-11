@@ -169,13 +169,13 @@ onMounted(async () => {
         <h1>Movimientos</h1>
         <p class="suave">Controlá tu plata, vencimientos y movimientos del día a día.</p>
       </div>
-      <RouterLink to="/categorias" class="link">Administrar categorías</RouterLink>
+      <RouterLink to="/categorias" class="link" data-tour="link-categorias">Administrar categorías</RouterLink>
     </div>
 
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
     <div v-if="aviso" class="aviso" role="status">{{ aviso }}</div>
 
-    <section class="bloque">
+    <section class="bloque" data-tour="mi-plata">
       <h2>Mi plata</h2>
       <div v-if="dinero" class="mi-plata panel">
         <div class="total">
@@ -216,7 +216,7 @@ onMounted(async () => {
       </ul>
     </section>
 
-    <section class="bloque">
+    <section class="bloque" data-tour="cargar-movimiento">
       <h2>Cargar movimiento</h2>
       <FormularioMovimiento
         :key="editando?.id ?? 'nuevo'"
@@ -231,7 +231,7 @@ onMounted(async () => {
       />
     </section>
 
-    <section class="bloque">
+    <section class="bloque" data-tour="lista-movimientos">
       <h2>Movimientos</h2>
       <form class="filtros panel" @submit.prevent="filtrar">
         <label>Mes <input v-model="filtros.mes" type="month" @change="filtrar" /></label>

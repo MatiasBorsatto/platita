@@ -121,9 +121,10 @@ onMounted(cargar)
 <template>
   <section>
     <h1>Metas</h1>
+    <p class="intro-modulo">Juntá plata para algo que quieras: un viaje, un arreglo o un fondo de emergencia. Cada aporte acerca la barra al objetivo.</p>
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
 
-    <form class="form-grid panel" novalidate @submit.prevent="crear">
+    <form class="form-grid panel" novalidate data-tour="nueva-meta" @submit.prevent="crear">
       <h2>Nueva meta</h2>
       <label>Nombre <input v-model="nombre" type="text" maxlength="100" /></label>
       <label>Objetivo <CampoMonto v-model="objetivo" /></label>
