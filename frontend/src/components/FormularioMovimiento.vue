@@ -25,7 +25,7 @@ const moneda = ref(props.movimiento?.moneda ?? 'ARS')
 const metaId = ref('')
 // El backend solo acepta metas propias y de la misma moneda que el movimiento.
 const metasDisponibles = computed(() =>
-  props.metas.filter((m) => (m.moneda ?? 'ARS') === moneda.value && (!props.usuarioId || !m.usuarioId || m.usuarioId === props.usuarioId))
+  (Array.isArray(props.metas) ? props.metas : []).filter((m) => (m.moneda ?? 'ARS') === moneda.value && (!props.usuarioId || !m.usuarioId || m.usuarioId === props.usuarioId))
 )
 watch(metasDisponibles, (lista) => {
   if (metaId.value && !lista.some((m) => m.id === metaId.value)) metaId.value = ''
