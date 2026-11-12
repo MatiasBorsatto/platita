@@ -7,10 +7,45 @@ const ENTRADA = [0.22, 1, 0.36, 1]
 // misma duración en lugar de onComplete, que no siempre se dispara.
 const tras = (ms, done) => setTimeout(done, ms)
 
+// Preferencia de animaciones elegida en Perfil (se guarda en este navegador):
+// 'activadas' (por defecto), 'sistema' (respeta la configuración de accesibilidad del sistema
+// operativo) o 'desactivadas'. Por defecto se anima aunque Windows tenga apagados los efectos
+// de animación, porque esa opción suele venir apagada sin que la persona lo haya elegido.
+const CLAVE_ANIMACIONES = 'platita.animaciones'
+export const OPCIONES_ANIMACIONES = ['activadas', 'sistema', 'desactivadas']
+
+export function preferenciaAnimaciones() {
+  try {
+    const valor = localStorage.getItem(CLAVE_ANIMACIONES)
+    return OPCIONES_ANIMACIONES.includes(valor) ? valor : 'activadas'
+  } catch {
+    return 'activadas'
+  }
+}
+
+export function elegirAnimaciones(valor) {
+  if (!OPCIONES_ANIMACIONES.includes(valor)) return
+  try {
+    localStorage.setItem(CLAVE_ANIMACIONES, valor)
+  } catch {
+    // Sin almacenamiento la elección dura hasta recargar.
+  }
+  aplicarPreferenciaAnimaciones()
+}
+
 // Sin matchMedia (entornos de prueba) se asume preferencia de reducir movimiento: no se anima.
 export function reducido() {
   if (typeof window === 'undefined' || !window.matchMedia) return true
+  const preferencia = preferenciaAnimaciones()
+  if (preferencia === 'activadas') return false
+  if (preferencia === 'desactivadas') return true
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+// Las reglas CSS que apagan transiciones dependen de esta clase en <html>, no de la media query.
+export function aplicarPreferenciaAnimaciones() {
+  if (typeof document === 'undefined') return
+  document.documentElement.classList.toggle('movimiento-reducido', reducido())
 }
 
 // Cambio entre páginas: la vista nueva entra con un leve desplazamiento y sus bloques aparecen en cascada.

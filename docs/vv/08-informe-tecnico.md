@@ -83,7 +83,7 @@ Platita fue concebido bajo el patrón de **Arquitectura en Tres Capas**, asegura
          │
          │ Peticiones HTTPS / JSON (Cookies httpOnly)
          ▼
-[ Servidor de Aplicaciones ] (Node.js + Express 5 - Render)
+[ Servidor de Aplicaciones ] (Node.js + Express 5 - servidor Ubuntu propio, expuesto con ngrok)
   ├── Middlewares (Auth JWT, Manejador de Errores, Validador)
   ├── Módulos de Dominio (Movimientos, Presupuestos, Gastos Fijos, Grupos, Saldos)
   └── Capa de Persistencia (Sequelize ORM)
@@ -104,11 +104,11 @@ Platita fue concebido bajo el patrón de **Arquitectura en Tres Capas**, asegura
    * API REST construida sobre **Node.js** con el framework **Express 5**.
    * Estructura modular por componentes de negocio: autenticación (`auth`), usuarios (`usuario`), categorías (`categorias`), movimientos (`movimientos`), gastos fijos (`gastos-fijos`), presupuestos (`presupuestos`), metas (`metas`), grupos familiares (`grupos`), liquidación (`saldos`) y reportes (`estadisticas`).
    * Manejador centralizado de errores asíncronos que intercepta fallos de validación, colisiones de unicidad o excepciones de autorización y responde códigos HTTP normalizados (400, 401, 403, 404, 409, 500).
-   * Alojado y desplegado de forma continua en **Render**.
+   * Alojado en un servidor Ubuntu propio como servicio `systemd` (`finanzas-backend`), que arranca solo al encender el equipo; un túnel **ngrok** con dominio fijo lo expone por HTTPS y Netlify le reenvía las peticiones `/api/*`.
 
 3. **Capa de Datos (Persistencia):**
    * Base de datos relacional **PostgreSQL** alojada en la infraestructura elástica de **Neon**.
-   * Mapeo objeto-relacional (ORM) mediante **Sequelize 6**, administrado estrictamente a través de **16 migraciones SQL reversibles**, garantizando la trazabilidad histórica de los cambios de esquema.
+   * Mapeo objeto-relacional (ORM) mediante **Sequelize 6**, administrado estrictamente a través de **19 migraciones SQL reversibles**, garantizando la trazabilidad histórica de los cambios de esquema.
 
 ---
 
@@ -126,10 +126,10 @@ Platita fue concebido bajo el patrón de **Arquitectura en Tres Capas**, asegura
 | **Framework HTTP** | Express | 5.x | Exposición y ruteo de endpoints de la API REST |
 | **ORM / Migraciones** | Sequelize | 6.x | Abstracción de base de datos y control de esquema |
 | **Base de Datos** | PostgreSQL (Neon) | 16.x | Motor relacional con réplicas y conexión SSL obligatoria |
-| **Seguridad y Criptografía** | bcryptjs / jsonwebtoken | 2.4.x / 9.x | Cifrado unidireccional de contraseñas y firma de tokens |
+| **Seguridad y Criptografía** | bcryptjs / jsonwebtoken | 3.x / 9.x | Cifrado unidireccional de contraseñas y firma de tokens |
 | **Pruebas de Backend** | Jest + Supertest | 30.x / 7.x | Pruebas unitarias y de integración sobre la API HTTP real |
 | **Pruebas de Frontend** | Vitest + Vue Test Utils | 4.x / 2.5.x | Pruebas de componentes de interfaz y lógica reactiva |
-| **Plataformas de Despliegue** | Netlify & Render | PaaS | Hosting continuo del frontend (SPA) y backend (Node API) |
+| **Plataformas de Despliegue** | Netlify + servidor Ubuntu con ngrok | PaaS / propio | Hosting continuo del frontend (SPA); backend (Node API) como servicio `systemd` expuesto por túnel ngrok |
 | **Control de Versiones** | Git & GitHub | SCM | Control de versiones distribuido y flujos de integración |
 
 ---
@@ -160,7 +160,8 @@ A lo largo del proceso se aplicaron buenas prácticas de ingeniería de software
 * **Separación de responsabilidades:** La lógica de cálculo monetario se encapsuló en módulos independientes (`backend/src/utils/dinero.js`) desacoplada de los controladores de Express.
 * **Transaccionalidad en operaciones complejas:** En los gastos compartidos y la edición de movimientos vinculados a metas, todas las escrituras se englobaron en transacciones ACID de Sequelize para evitar datos huérfanos.
 * **Evolución del modelo:** Inicialmente se incluyó un módulo de tarjetas de crédito que posteriormente fue reemplazado por un modelo más flexible y realista de **Gastos Fijos** (migración `013-gastos-fijos.js`), permitiendo modelar cuotas finitas y compromisos recurrentes mensuales sin atarse a resúmenes bancarios rígidos.
-* **Control de versiones de código y despliegue continuo:** Cada push a la rama `main` activó automáticamente los webhooks de compilación en Netlify para el frontend y en Render para el backend.
+* **Funciones incorporadas en la etapa final:** control parental (un menor sin tutor solo accede a sus funciones personales; con tutor, a lo que este le habilite), soporte multimoneda en movimientos, presupuestos, metas y gastos fijos (migraciones 017 a 019), y un recorrido guiado interactivo por todos los módulos, que se muestra en el primer ingreso y se puede repetir desde el botón de ayuda.
+* **Control de versiones de código y despliegue continuo:** Cada push a la rama `main` activó automáticamente la compilación del frontend en Netlify; el backend se actualiza en el servidor propio y se reinicia con `systemctl restart finanzas-backend`.
 
 ---
 
@@ -355,13 +356,13 @@ cd frontend && npm test
 
 | Suite | Motor | Archivos de Prueba | Casos Ejecutados | Tasa de Éxito |
 |---|---|---|---|---|
-| **Backend API & Lógica** | Jest + Supertest | 27 archivos | 211 pruebas | **100 % (211/211 aprobadas)** |
-| **Frontend UI & Tiendas** | Vitest + Vue Test Utils | 22 archivos | 80 pruebas | **100 % (80/80 aprobadas)** |
-| **Total Global Automatizado** | — | **49 archivos** | **291 pruebas** | **100 % Aprobación** |
+| **Backend API & Lógica** | Jest + Supertest | 34 archivos | 250 pruebas | **100 % (250/250 aprobadas)** |
+| **Frontend UI & Tiendas** | Vitest + Vue Test Utils | 28 archivos | 98 pruebas | **100 % (98/98 aprobadas)** |
+| **Total Global Automatizado** | — | **62 archivos** | **348 pruebas** | **100 % Aprobación** |
 
 ### 17.3 Ventajas y Limitaciones Observadas
 * **Ventajas:**
-  * Velocidad de ejecución: las 291 pruebas se completan en menos de 15 segundos en total.
+  * Velocidad de ejecución: las 348 pruebas se completan en menos de 15 segundos en total.
   * Detección temprana de regresiones ante cambios en esquemas de base de datos o lógica de negocio.
   * Las pruebas de API verifican restricciones reales de base de datos (claves foráneas, índices de unicidad y triggers), no simulaciones en memoria.
 * **Limitaciones:**
@@ -485,14 +486,14 @@ A continuación se sintetiza el balance cuantitativo de las actividades de V&V d
 ========================================================================
   • Casos de prueba formales diseñados:             23 casos
   • Casos de prueba ejecutados manualmente:         17 casos (100 % completados)
-  • Pruebas automatizadas de Backend (Jest):        211 pruebas (100 % exitosas)
-  • Pruebas automatizadas de Frontend (Vitest):     80 pruebas (100 % exitosas)
-  • Total de pruebas automatizadas en suite:        291 pruebas aprobadas
+  • Pruebas automatizadas de Backend (Jest):        250 pruebas (100 % exitosas)
+  • Pruebas automatizadas de Frontend (Vitest):     98 pruebas (100 % exitosas)
+  • Total de pruebas automatizadas en suite:        348 pruebas aprobadas
   • Pruebas de sistema sobre entorno integrado:     16 pruebas evaluadas
   • Defectos identificados y registrados:           16 defectos
   • Tasa de resolución y cierre de defectos:        100 % (16 / 16 cerrados)
   • Defectos no código detectados y subsanados:     5 hallazgos (3 corregidos, 2 doc.)
-  • Estado de la compilación y despliegue:          Verificado y operativo en Netlify/Render
+  • Estado de la compilación y despliegue:          Verificado y operativo (Netlify + servidor propio)
 ========================================================================
 ```
 
@@ -505,7 +506,7 @@ El proyecto **Platita** ha demostrado satisfacer plenamente los objetivos funcio
 ### 24.1 Respuesta a la Pregunta Fundamental de Validación
 > **¿El sistema satisface las necesidades planteadas al comienzo del proyecto?**
 > 
-> **Sí, de forma concluyente.** La aplicación permite a los usuarios registrar sus operaciones de ingresos y gastos con certeza matemática de centavos, proyectar compromisos periódicos mediante gastos fijos, mantener control de presupuestos mediante alarmas oportunas y administrar economías familiares compartidas sin desbalances ni ambigüedades. Las pruebas automatizadas (291 pruebas) y las validaciones de sistema en navegadores móviles y de escritorio constituyen la evidencia fehaciente de su solidez operativa.
+> **Sí, de forma concluyente.** La aplicación permite a los usuarios registrar sus operaciones de ingresos y gastos con certeza matemática de centavos, proyectar compromisos periódicos mediante gastos fijos, mantener control de presupuestos mediante alarmas oportunas y administrar economías familiares compartidas sin desbalances ni ambigüedades. Las pruebas automatizadas (348 pruebas) y las validaciones de sistema en navegadores móviles y de escritorio constituyen la evidencia fehaciente de su solidez operativa.
 
 ### 24.2 Principales Aprendizajes del Proceso de V&V
 1. **La exactitud numérica no se negocia:** El tratamiento de dinero en aplicaciones web debe realizarse invariablemente mediante aritmética de enteros (centavos) en la capa de negocio, protegiendo las bases de datos con validaciones rigurosas en los valores límite superiores e inferiores.

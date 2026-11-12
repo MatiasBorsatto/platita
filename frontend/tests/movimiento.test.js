@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { reducido, entrarPagina, salirPagina, contar } from '../src/motion/movimiento.js'
+import { reducido, entrarPagina, salirPagina, contar, preferenciaAnimaciones, elegirAnimaciones } from '../src/motion/movimiento.js'
 import CifraAnimada from '../src/components/CifraAnimada.vue'
 
 // jsdom no implementa matchMedia: el módulo lo trata como preferencia de reducir movimiento.
@@ -21,6 +21,32 @@ describe('movimiento', () => {
     const onUpdate = vi.fn()
     expect(contar(1234.5, onUpdate)).toBeNull()
     expect(onUpdate).toHaveBeenCalledWith(1234.5)
+  })
+
+  it('por defecto anima aunque el sistema pida reducir movimiento; "sistema" y "desactivadas" lo respetan', () => {
+    const original = window.matchMedia
+    window.matchMedia = () => ({ matches: true })
+    try {
+      localStorage.removeItem('platita.animaciones')
+      expect(preferenciaAnimaciones()).toBe('activadas')
+      expect(reducido()).toBe(false)
+      expect(document.documentElement.classList.contains('movimiento-reducido')).toBe(false)
+
+      elegirAnimaciones('sistema')
+      expect(reducido()).toBe(true)
+      expect(document.documentElement.classList.contains('movimiento-reducido')).toBe(true)
+
+      elegirAnimaciones('desactivadas')
+      window.matchMedia = () => ({ matches: false })
+      expect(reducido()).toBe(true)
+
+      elegirAnimaciones('cualquiera')
+      expect(preferenciaAnimaciones()).toBe('desactivadas')
+    } finally {
+      window.matchMedia = original
+      localStorage.removeItem('platita.animaciones')
+      document.documentElement.classList.remove('movimiento-reducido')
+    }
   })
 
   it('CifraAnimada muestra el monto formateado con su valor final', async () => {

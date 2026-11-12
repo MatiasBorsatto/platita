@@ -123,13 +123,12 @@ button, a, .tarjeta-acceso button {
 button:active:not(:disabled) { transform: scale(0.97); }
 a:hover { text-decoration: underline; }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+/* La clase la pone motion/movimiento.js según la preferencia elegida en Perfil. */
+html.movimiento-reducido *, html.movimiento-reducido *::before, html.movimiento-reducido *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 /* Superficie de contenido: tarjeta blanca con sombra suave */

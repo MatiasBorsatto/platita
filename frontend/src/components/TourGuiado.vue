@@ -407,8 +407,10 @@ h2 { margin: 0 0 6px; font-size: 1.25rem; font-weight: 800; line-height: 1.25; l
   .botones button { height: 40px; padding: 0 14px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .foco.visible { animation: none; }
-  .relleno, .cerrar, .botones button, .bloqueo, .foco { transition: none; }
-}
+:global(html.movimiento-reducido) .foco.visible { animation: none; }
+:global(html.movimiento-reducido) .relleno,
+:global(html.movimiento-reducido) .cerrar,
+:global(html.movimiento-reducido) .botones button,
+:global(html.movimiento-reducido) .bloqueo,
+:global(html.movimiento-reducido) .foco { transition: none; }
 </style>

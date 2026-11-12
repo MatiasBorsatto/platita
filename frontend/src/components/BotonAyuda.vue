@@ -64,8 +64,6 @@ function abrir() {
   .ayuda { right: 16px; bottom: 100px; height: 52px; min-width: 52px; padding: 0 14px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ayuda { animation: none; transition: none; }
-  .etiqueta { transition: none; }
-}
+:global(html.movimiento-reducido) .ayuda { animation: none; transition: none; }
+:global(html.movimiento-reducido) .etiqueta { transition: none; }
 </style>

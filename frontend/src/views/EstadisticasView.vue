@@ -5,6 +5,7 @@ import GraficoIngresosGastos from '../charts/GraficoIngresosGastos.vue'
 import GraficoGastosPorCategoria from '../charts/GraficoGastosPorCategoria.vue'
 import GraficoAhorroNeto from '../charts/GraficoAhorroNeto.vue'
 import CifraAnimada from '../components/CifraAnimada.vue'
+import CargandoIndicador from '../components/CargandoIndicador.vue'
 import { resumenMensual, serieHistorica } from '../services/estadisticas.js'
 
 const MAX_MESES = 24

@@ -27,7 +27,6 @@ JWT_SECRET=una-cadena-larga-y-aleatoria
 Opcionales, para funciones que dependen de servicios externos:
 
 ```bash
-GOOGLE_CLIENT_ID=tu-id-de-cliente.apps.googleusercontent.com
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=tu-correo@gmail.com

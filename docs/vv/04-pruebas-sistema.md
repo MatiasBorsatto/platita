@@ -23,6 +23,8 @@ Responsable: Matias Borsatto. Ejecutadas sobre el sistema completo: backend y fr
 | ST-15 | Recuperación de contraseña por email | Solicitar recuperación | Correo recibido con enlace | Requiere configurar SMTP en el entorno | Pendiente |
 | ST-16 | Login con Google | Ingresar con Google | Acceso con la cuenta de Google | Requiere configurar `GOOGLE_CLIENT_ID` | Pendiente |
 
+> Nota (11/11/2026): el login con Google se retiró de la aplicación (migración `015-quitar-google.js`), por lo que ST-16 quedó sin efecto. En el informe técnico (`08`) el identificador ST-16 corresponde al caso "Flujo completo de grupo".
+
 ## Requisitos verificados
 
 | Requisito | Casos | Estado |

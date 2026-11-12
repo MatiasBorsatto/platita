@@ -3,6 +3,13 @@ import CargandoIndicador from '../components/CargandoIndicador.vue'
 import { ref, onMounted } from 'vue'
 import { useSesion } from '../stores/sesion.js'
 import { obtenerPerfil, actualizarPerfil } from '../services/usuario.js'
+import { preferenciaAnimaciones, elegirAnimaciones } from '../motion/movimiento.js'
+
+// Se guarda en este navegador; no viaja al servidor.
+const animaciones = ref(preferenciaAnimaciones())
+function cambiarAnimaciones() {
+  elegirAnimaciones(animaciones.value)
+}
 
 const sesion = useSesion()
 const perfil = ref(null)
@@ -118,6 +125,18 @@ onMounted(async () => {
         <p v-if="errores.avisos" class="error-form" role="alert">{{ errores.avisos }}</p>
       </section>
 
+      <section aria-labelledby="titulo-animaciones">
+        <h2 id="titulo-animaciones">Animaciones</h2>
+        <label class="opcion opcion-columna">
+          Movimiento de la interfaz
+          <select v-model="animaciones" name="animaciones" @change="cambiarAnimaciones">
+            <option value="activadas">Activadas</option>
+            <option value="sistema">Según la configuración del sistema</option>
+            <option value="desactivadas">Desactivadas</option>
+          </select>
+        </label>
+      </section>
+
       <section aria-labelledby="titulo-datos">
         <h2 id="titulo-datos">Datos personales</h2>
         <form class="panel" aria-label="Datos personales" @submit.prevent="guardarDatos">
@@ -164,5 +183,7 @@ onMounted(async () => {
   background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio-chico);
 }
 .opcion input { flex: none; margin: 0; }
+.opcion-columna { flex-direction: column; align-items: stretch; gap: 8px; cursor: default; }
+.opcion-columna select { width: 100%; min-height: 44px; padding: 0 12px; }
 .resumen { color: var(--texto-suave); }
 </style>
