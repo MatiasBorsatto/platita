@@ -66,6 +66,12 @@ describe('metas de grupo', () => {
     expect(res.body.meta).toMatchObject({ acumulado: '250.00', porcentaje: 25, restante: '750.00' });
     const lista = (await agentB.get('/api/metas')).body.find((m) => m.id === meta.id);
     expect(lista.acumulado).toBe('250.00');
+
+    // Cada aporte queda en el historial de quien lo hizo, no en el del creador de la meta.
+    const deB = (await agentB.get('/api/movimientos?mes=2026-10&limit=100')).body.items.filter((m) => m.metaId === meta.id);
+    const deA = (await agentA.get('/api/movimientos?mes=2026-10&limit=100')).body.items.filter((m) => m.metaId === meta.id);
+    expect(deB.map((m) => [m.tipo, m.monto])).toEqual([['aporte_meta', '150.00']]);
+    expect(deA.map((m) => [m.tipo, m.monto])).toEqual([['aporte_meta', '100.00']]);
   });
 
   test('un miembro de otro grupo no puede aportar (404) ni ve la meta', async () => {

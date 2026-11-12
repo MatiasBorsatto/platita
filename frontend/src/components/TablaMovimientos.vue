@@ -14,11 +14,23 @@ function fechaLegible(fecha) {
   const [a, m, d] = String(fecha).split('-')
   return `${d}/${m}/${a}`
 }
+// Los aportes y retiros hechos desde Metas quedan en el historial como registro: no son ingreso
+// ni gasto (no cambian Mi plata), así que van sin signo y en color neutro.
+const TIPOS_META = ['aporte_meta', 'retiro_meta']
+const esDeMeta = (m) => TIPOS_META.includes(m.tipo)
+
 function signo(m) {
+  if (esDeMeta(m)) return ''
   return m.tipo === 'ingreso' ? '+' : '-'
 }
-function esFijo(m) {
-  return !!m.gastoFijoId
+// De dónde viene un movimiento que no se edita acá: se gestiona desde ese módulo.
+function origen(m) {
+  if (m.gastoFijoId) return { etiqueta: 'Gasto fijo', modulo: 'Gastos fijos' }
+  if (esDeMeta(m)) return { etiqueta: 'Meta', modulo: 'Metas' }
+  return null
+}
+function categoria(m) {
+  return esDeMeta(m) ? '—' : nombreCategoria(m.categoriaId)
 }
 </script>
 
@@ -35,14 +47,16 @@ function esFijo(m) {
             <td>{{ fechaLegible(m.fecha) }}</td>
             <td>
               {{ m.descripcion || '—' }}
-              <span v-if="esFijo(m)" class="etiqueta">Gasto fijo</span>
+              <span v-if="origen(m)" class="etiqueta">{{ origen(m).etiqueta }}</span>
             </td>
-            <td>{{ nombreCategoria(m.categoriaId) }}</td>
+            <td>{{ categoria(m) }}</td>
             <td class="num" :class="m.tipo">{{ signo(m) }}{{ formatearMontoEn(m.monto, m.moneda) }}</td>
             <td class="acciones">
-              <button v-if="!esFijo(m)" type="button" @click="emit('editar', m)">Editar</button>
-              <button v-if="!esFijo(m)" type="button" @click="emit('eliminar', m)">Eliminar</button>
-              <span v-else class="suave">Gestionado desde Gastos fijos</span>
+              <span v-if="origen(m)" class="suave">Gestionado desde {{ origen(m).modulo }}</span>
+              <template v-else>
+                <button type="button" @click="emit('editar', m)">Editar</button>
+                <button type="button" @click="emit('eliminar', m)">Eliminar</button>
+              </template>
             </td>
           </tr>
         </tbody>
@@ -53,13 +67,15 @@ function esFijo(m) {
         <div class="fila"><span>{{ fechaLegible(m.fecha) }}</span><strong :class="m.tipo">{{ signo(m) }}{{ formatearMontoEn(m.monto, m.moneda) }}</strong></div>
         <div>
           {{ m.descripcion || '—' }}
-          <span v-if="esFijo(m)" class="etiqueta">Gasto fijo</span>
+          <span v-if="origen(m)" class="etiqueta">{{ origen(m).etiqueta }}</span>
         </div>
-        <div class="suave">{{ nombreCategoria(m.categoriaId) }}</div>
+        <div class="suave">{{ categoria(m) }}</div>
         <div class="acciones">
-          <button v-if="!esFijo(m)" type="button" @click="emit('editar', m)">Editar</button>
-          <button v-if="!esFijo(m)" type="button" @click="emit('eliminar', m)">Eliminar</button>
-          <span v-else class="suave">Gestionado desde Gastos fijos</span>
+          <span v-if="origen(m)" class="suave">Gestionado desde {{ origen(m).modulo }}</span>
+          <template v-else>
+            <button type="button" @click="emit('editar', m)">Editar</button>
+            <button type="button" @click="emit('eliminar', m)">Eliminar</button>
+          </template>
         </div>
       </li>
     </ul>

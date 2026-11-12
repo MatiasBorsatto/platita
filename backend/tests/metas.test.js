@@ -96,7 +96,8 @@ describe('metas', () => {
     const meta = (await crearMeta(agentA)).body;
     const res = await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '5000.00', fecha: '2026-10-01' });
     expect(res.status).toBe(201);
-    expect(res.body.aporte).toMatchObject({ monto: '5000.00', movimientoId: null });
+    expect(res.body.aporte).toMatchObject({ monto: '5000.00' });
+    expect(res.body.aporte.movimientoId).toEqual(expect.any(String));
     expect(res.body.meta).toMatchObject({ acumulado: '5000.00', porcentaje: 25, restante: '15000.00' });
   });
 
@@ -200,5 +201,66 @@ describe('movimientos asociados a una meta', () => {
       .post('/api/movimientos')
       .send({ tipo: 'ingreso', monto: '10', fecha: '2026-10-05', metaId: 'abc' });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('aportes y retiros de metas en el historial de movimientos', () => {
+  const historial = async (agent, mes) => (await agent.get(`/api/movimientos?mes=${mes}&limit=100`)).body.items;
+  const miPlata = async (agent) => (await agent.get('/api/movimientos/dinero-actual')).body.dineroActual;
+
+  test('un aporte desde Metas queda en el historial y no cambia Mi plata', async () => {
+    const meta = (await crearMeta(agentA, { nombre: `Historial ${sufijo}` })).body;
+    const antes = await miPlata(agentA);
+    const res = await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '3000.00', fecha: '2026-09-03' });
+    expect(res.status).toBe(201);
+    const registro = (await historial(agentA, '2026-09')).find((m) => m.id === res.body.aporte.movimientoId);
+    expect(registro).toMatchObject({
+      tipo: 'aporte_meta', monto: '3000.00', moneda: 'ARS', fecha: '2026-09-03', metaId: meta.id,
+      descripcion: `Aporte a la meta «Historial ${sufijo}»`
+    });
+    expect(await miPlata(agentA)).toBe(antes);
+  });
+
+  test('un retiro queda como retiro_meta con el monto en positivo y en la moneda de la meta', async () => {
+    const meta = (await crearMeta(agentA, { nombre: `Dólares ${sufijo}`, moneda: 'USD' })).body;
+    await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '50.00', fecha: '2026-09-04' });
+    const res = await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '-20.00', fecha: '2026-09-05' });
+    const registro = (await historial(agentA, '2026-09')).find((m) => m.id === res.body.aporte.movimientoId);
+    expect(registro).toMatchObject({ tipo: 'retiro_meta', monto: '20.00', moneda: 'USD', descripcion: `Retiro de la meta «Dólares ${sufijo}»` });
+    expect(res.body.meta.acumulado).toBe('30.00');
+  });
+
+  // También es la regresión de los retiros: un aporte negativo en el mes hacía responder 400
+  // "Monto inválido" al resumen mensual y a la serie histórica.
+  test('no cuenta como ingreso ni gasto en las estadísticas, aun con un retiro en el mes', async () => {
+    const antes = (await agentA.get('/api/estadisticas/mensual?mes=2026-08')).body;
+    const meta = (await crearMeta(agentA)).body;
+    await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '700.00', fecha: '2026-08-10' });
+    await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '-200.00', fecha: '2026-08-11' });
+    const respuesta = await agentA.get('/api/estadisticas/mensual?mes=2026-08');
+    expect(respuesta.status).toBe(200);
+    const despues = respuesta.body;
+    const historico = await agentA.get('/api/estadisticas/historico?desde=2026-08&hasta=2026-08');
+    expect(historico.status).toBe(200);
+    expect(despues.ingresos).toBe(antes.ingresos);
+    expect(despues.gastos).toBe(antes.gastos);
+    expect(despues.aportesMetas).toBe('500.00');
+  });
+
+  test('el registro no se edita ni se borra desde Movimientos', async () => {
+    const meta = (await crearMeta(agentA)).body;
+    const { aporte } = (await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '100.00', fecha: '2026-09-06' })).body;
+    const editar = await agentA.patch(`/api/movimientos/${aporte.movimientoId}`).send({ monto: '999.00' });
+    expect(editar.status).toBe(409);
+    expect(editar.body.error ?? editar.body.mensaje).toMatch(/Metas/);
+    expect((await agentA.delete(`/api/movimientos/${aporte.movimientoId}`)).status).toBe(409);
+    expect((await AporteMeta.findByPk(aporte.id)).monto).toBe('100.00');
+  });
+
+  test('al eliminar la meta se borran sus registros de aportes del historial', async () => {
+    const meta = (await crearMeta(agentA)).body;
+    const { aporte } = (await agentA.post(`/api/metas/${meta.id}/aportes`).send({ monto: '100.00', fecha: '2026-09-07' })).body;
+    expect((await agentA.delete(`/api/metas/${meta.id}`)).status).toBe(204);
+    expect(await Movimiento.findByPk(aporte.movimientoId)).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 const { Op } = require('sequelize');
 const { Movimiento, ParticipacionGasto, Categoria, Meta, AporteMeta } = require('../../db/models');
-const { sumar } = require('../../utils/dinero');
+const { sumarConSigno } = require('../../utils/dinero');
 const { rangoDelMes } = require('../movimientos/movimientos.service');
 const { calcularEstadosPresupuestos } = require('../presupuestos/presupuestos.service');
 const { calcularResumen } = require('./resumenMensual.calculo');
@@ -41,7 +41,7 @@ async function aportesDelMes(usuarioId, mes) {
     where: { metaId: metas.map((m) => m.id), fecha: { [Op.between]: rangoDelMes(mes) } },
     attributes: ['monto'],
   });
-  return sumar(aportes.map((a) => a.monto));
+  return sumarConSigno(aportes.map((a) => a.monto));
 }
 
 // Un resumen por moneda, sin convertir entre ellas.
@@ -97,7 +97,7 @@ async function aportesDelRango(usuarioId, desde, hasta) {
     if (!porMes.has(clave)) porMes.set(clave, []);
     porMes.get(clave).push(a.monto);
   }
-  return new Map([...porMes].map(([clave, montos]) => [clave, sumar(montos)]));
+  return new Map([...porMes].map(([clave, montos]) => [clave, sumarConSigno(montos)]));
 }
 
 async function resumenMensual(usuarioId, mes) {

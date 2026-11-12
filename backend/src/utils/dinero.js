@@ -37,6 +37,16 @@ function sumar(montos) {
   return deCentavos(montos.reduce((acc, m) => acc + aCentavos(m), 0n));
 }
 
+// Como sumar, pero admite montos negativos (los retiros de una meta se guardan como aportes negativos).
+// Devuelve "-12.34" si el total es negativo.
+function sumarConSigno(montos) {
+  const total = montos.reduce((acc, m) => {
+    const texto = String(m).trim();
+    return texto.startsWith('-') ? acc - aCentavos(texto.slice(1)) : acc + aCentavos(texto);
+  }, 0n);
+  return total < 0n ? `-${deCentavos(-total)}` : deCentavos(total);
+}
+
 function dividirEnPartes(total, cantidad) {
   if (!Number.isInteger(cantidad) || cantidad < 1) {
     throw new ErrorValidacion('La cantidad de partes debe ser un entero mayor o igual a 1');
@@ -58,4 +68,4 @@ function formatearMonto(monto, moneda = 'ARS') {
   return `${simbolo} ${entero},${decimales}`;
 }
 
-module.exports = { validarMonto, sumar, dividirEnPartes, aCentavos, deCentavos, formatearMonto };
+module.exports = { validarMonto, sumar, sumarConSigno, dividirEnPartes, aCentavos, deCentavos, formatearMonto };

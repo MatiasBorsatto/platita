@@ -1,6 +1,6 @@
 const { fn, col, Op } = require('sequelize');
 const { sequelize } = require('../../db/sequelize');
-const { Meta, AporteMeta, MiembroGrupo } = require('../../db/models');
+const { Meta, AporteMeta, MiembroGrupo, Movimiento } = require('../../db/models');
 const { ErrorNoEncontrado, ErrorValidacion } = require('../../utils/errores');
 const { progresoMeta } = require('./metas.calculo');
 
@@ -75,15 +75,36 @@ async function editarMeta(usuarioId, id, datos) {
 async function eliminarMeta(usuarioId, id) {
   const meta = await obtenerPropia(usuarioId, id);
   await sequelize.transaction(async (transaction) => {
+    // Sin la meta, sus registros de aportes y retiros no tienen a qué referirse.
+    await Movimiento.destroy({ where: { metaId: meta.id, tipo: TIPOS_REGISTRO_META }, transaction });
     await AporteMeta.destroy({ where: { metaId: meta.id }, transaction });
     await meta.destroy({ transaction });
   });
 }
 
-// monto positivo = aporte; negativo = retiro.
+// Registros que deja en el historial de movimientos un aporte o un retiro hecho desde Metas.
+// No son ingresos ni gastos: no cambian "Mi plata", las estadísticas ni los presupuestos,
+// porque todas esas cuentas filtran tipo ingreso/gasto.
+const TIPOS_REGISTRO_META = ['aporte_meta', 'retiro_meta'];
+
+// monto positivo = aporte; negativo = retiro. El registro del historial queda a nombre de quien
+// lo hace (en una meta de grupo, cada integrante ve sus propios aportes), en la moneda de la meta.
 async function registrarAporte(usuarioId, metaId, { monto, fecha }) {
   const meta = await obtenerAccesible(usuarioId, metaId);
-  const aporte = await AporteMeta.create({ metaId: meta.id, monto, fecha });
+  const retiro = String(monto).startsWith('-');
+  const aporte = await sequelize.transaction(async (transaction) => {
+    const registro = await Movimiento.create({
+      usuarioId,
+      alcance: 'personal',
+      tipo: retiro ? 'retiro_meta' : 'aporte_meta',
+      monto: retiro ? String(monto).slice(1) : monto,
+      moneda: meta.moneda,
+      fecha,
+      metaId: meta.id,
+      descripcion: `${retiro ? 'Retiro de' : 'Aporte a'} la meta «${meta.nombre}»`,
+    }, { transaction });
+    return AporteMeta.create({ metaId: meta.id, monto, fecha, movimientoId: registro.id }, { transaction });
+  });
   return { aporte, meta: await vistaDe(meta) };
 }
 
@@ -108,4 +129,5 @@ module.exports = {
   registrarAporte,
   registrarAporteDeMovimiento,
   obtenerPropia,
+  TIPOS_REGISTRO_META,
 };

@@ -48,6 +48,9 @@ async function obtenerPropio(usuarioId, id) {
   if (mov.gastoFijoId) {
     throw new ErrorConflicto('Este movimiento viene de un gasto fijo. Deshacé el pago desde Gastos fijos.');
   }
+  if (metasService.TIPOS_REGISTRO_META.includes(mov.tipo)) {
+    throw new ErrorConflicto('Este registro viene de Metas: los aportes y retiros se gestionan desde Metas.');
+  }
   return mov;
 }
 

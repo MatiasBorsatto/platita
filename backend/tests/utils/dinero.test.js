@@ -1,4 +1,4 @@
-const { validarMonto, sumar, dividirEnPartes, formatearMonto } = require('../../src/utils/dinero');
+const { validarMonto, sumar, sumarConSigno, dividirEnPartes, formatearMonto } = require('../../src/utils/dinero');
 
 // Los avisos muestran los montos con el formato argentino, igual que la interfaz.
 describe('formatearMonto', () => {
@@ -52,4 +52,12 @@ test('sumar es exacto en centavos', () => {
 
 test('ErrorValidacion tiene status 400', () => {
   expect(new ErrorValidacion('x').status).toBe(400);
+});
+
+// Los retiros de una meta se guardan como aportes negativos; sumar() los rechaza.
+test('sumarConSigno suma aportes y retiros y conserva el signo', () => {
+  expect(sumarConSigno(['700.00', '-200.00'])).toBe('500.00');
+  expect(sumarConSigno(['100.00', '-150.50'])).toBe('-50.50');
+  expect(sumarConSigno(['-0.10', '-0.20'])).toBe('-0.30');
+  expect(sumarConSigno([])).toBe('0.00');
 });
