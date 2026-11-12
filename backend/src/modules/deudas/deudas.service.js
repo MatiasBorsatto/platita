@@ -25,7 +25,7 @@ async function listarDeudas(usuarioId) {
       model: ConceptoGastoFijo,
       as: 'concepto',
       required: true,
-      attributes: ['cuotas'],
+      attributes: ['cuotas', 'nombre'],
     }],
     order: [['fechaVencimiento', 'ASC'], ['id', 'ASC']],
   });
@@ -51,12 +51,15 @@ async function listarDeudas(usuarioId) {
       id: c.id,
       gastoId: gasto.id,
       nombre: gasto.nombre,
+      concepto: c.concepto.nombre,
       ambito: gasto.ambito,
       mes: c.mes,
       monto: c.monto,
       moneda: gasto.moneda,
       fechaVencimiento: c.fechaVencimiento,
       vencida: c.fechaVencimiento < hoy,
+      // Las cuotas las paga quien creó el gasto fijo (también en los de grupo).
+      puedePagar: gasto.usuarioId === usuarioId,
     });
   }
 

@@ -74,4 +74,28 @@ describe('módulo Deudas', () => {
     expect(res.body.deudas).toHaveLength(0);
     expect(res.body.totales).toEqual([]);
   });
+
+  // Solo quien creó el gasto fijo puede pagar sus cuotas: la pantalla de Deudas muestra el botón
+  // Pagar únicamente donde va a funcionar.
+  test('cada deuda indica si el usuario puede pagarla', async () => {
+    const propias = (await ana.agent.get('/api/deudas')).body.deudas;
+    expect(propias.length).toBeGreaterThan(0);
+    expect(propias.every((d) => d.puedePagar === true)).toBe(true);
+
+    const grupo = (await ana.agent.post('/api/grupos').send({ nombre: `Deudas ${sufijo}` })).body;
+    expect((await otro.agent.post('/api/grupos/unirse').send({ codigo: grupo.codigo })).status).toBeLessThan(300);
+    const gasto = await ana.agent.post('/api/gastos-fijos').send({
+      nombre: 'Expensas del grupo', diaVencimiento: 10, ambito: 'grupo', grupoId: grupo.id,
+      conceptos: [{ nombre: 'Expensas', montoTotal: '90.00', cuotas: 1, mesInicio: '2026-01' }],
+    });
+    expect(gasto.status).toBe(201);
+
+    const deOtro = (await otro.agent.get('/api/deudas')).body.deudas.filter((d) => d.gastoId === gasto.body.id);
+    expect(deOtro).toHaveLength(1);
+    expect(deOtro[0].puedePagar).toBe(false);
+    // Cada cuota dice de qué concepto es: un gasto fijo puede tener varios.
+    expect(deOtro[0].concepto).toBe('Expensas');
+    const deAna = (await ana.agent.get('/api/deudas')).body.deudas.filter((d) => d.gastoId === gasto.body.id);
+    expect(deAna[0].puedePagar).toBe(true);
+  });
 });
