@@ -1,6 +1,6 @@
 <script setup>
 import CampoMonto from './CampoMonto.vue'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { formatearMontoEn, normalizarMonto, hoyLocal } from '../utils/formato.js'
 import { MONEDAS } from '../utils/gastoFijo.js'
 
@@ -8,7 +8,9 @@ const props = defineProps({
   miembros: { type: Array, default: () => [] }, // [{ usuarioId, nombre }]
   pagos: { type: Array, default: () => [] },
   usuarioId: { type: String, default: null },
-  mostrarFormulario: { type: Boolean, default: false }
+  mostrarFormulario: { type: Boolean, default: false },
+  // Pago sugerido desde "Para quedar a mano": { deudorId, acreedorId, monto, moneda }.
+  sugerencia: { type: Object, default: null }
 })
 const emit = defineEmits(['registrar'])
 
@@ -20,6 +22,16 @@ const moneda = ref('ARS')
 const fecha = ref(hoy)
 const nota = ref('')
 const error = ref('')
+
+// Una sugerencia nueva llena el formulario; el usuario puede corregirlo antes de registrar.
+watch(() => props.sugerencia, (s) => {
+  if (!s) return
+  deudorId.value = s.deudorId
+  acreedorId.value = s.acreedorId
+  monto.value = s.monto
+  moneda.value = s.moneda ?? 'ARS'
+  error.value = ''
+})
 
 const nombreDe = (id) => props.miembros.find((m) => m.usuarioId === id)?.nombre ?? 'Ex miembro'
 

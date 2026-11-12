@@ -1,6 +1,6 @@
 <script setup>
 import { confirmar } from '../services/dialogo.js'
-import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, nextTick, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSesion } from '../stores/sesion.js'
 import SaldosGrupo from '../components/SaldosGrupo.vue'
@@ -141,7 +141,17 @@ const guardarPago = (datos) =>
     await registrarPago(id, datos)
     await cargarSaldosYPagos()
     mostrarPago.value = false
+    sugerenciaPago.value = null
   }, 'No se pudo registrar el pago.')
+
+// "Registrar este pago" en "Para quedar a mano": abre el formulario ya cargado y lo lleva a la vista.
+const sugerenciaPago = ref(null)
+async function saldar(transferencia) {
+  sugerenciaPago.value = { ...transferencia }
+  mostrarPago.value = true
+  await nextTick()
+  document.querySelector('.form-pago')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
 
 const regenerar = () =>
   accion(async () => {
@@ -258,7 +268,7 @@ onMounted(cargar)
       </div>
 
       <div class="bloque">
-        <SaldosGrupo :saldos="saldos" :usuario-id="usuarioId" @registrar-pago="mostrarPago = !mostrarPago" />
+        <SaldosGrupo :saldos="saldos" :usuario-id="usuarioId" @registrar-pago="mostrarPago = !mostrarPago" @saldar="saldar" />
       </div>
 
       <div v-if="hayMovimientoDeSaldos" class="bloque panel" data-evolucion-saldos>
@@ -271,6 +281,7 @@ onMounted(cargar)
           :pagos="pagos"
           :usuario-id="usuarioId"
           :mostrar-formulario="mostrarPago"
+          :sugerencia="sugerenciaPago"
           @registrar="guardarPago"
         />
       </div>
