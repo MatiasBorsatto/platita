@@ -1,6 +1,6 @@
 <script setup>
 import { confirmar } from '../services/dialogo.js'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import FormularioMovimiento from '../components/FormularioMovimiento.vue'
 import TablaMovimientos from '../components/TablaMovimientos.vue'
@@ -33,6 +33,13 @@ const versionFormulario = ref(0)
 const filtros = reactive({ mes: '', tipo: '', categoriaId: '' })
 
 const dinero = ref(null)
+const NOMBRE_MONEDA = { ARS: 'pesos', USD: 'dólares' }
+// La API trae un resumen por moneda (pesos primero); si no lo trae, el de primer nivel es en pesos.
+const saldosPorMoneda = computed(() => {
+  const d = dinero.value
+  if (!d) return []
+  return d.porMoneda?.length ? d.porMoneda : [{ moneda: 'ARS', ...d }]
+})
 const recordatorios = ref([])
 const cargandoRecordatorios = ref(false)
 
@@ -182,19 +189,17 @@ onMounted(async () => {
     <section class="bloque" data-tour="mi-plata">
       <h2>Mi plata</h2>
       <div v-if="dinero" class="mi-plata panel">
-        <div class="total">
-          <span>Dinero actual</span>
-          <strong>{{ formatear(dinero.dineroActual) }}</strong>
-        </div>
-        <div class="detalle">
-          <span>Ingresos: <strong>{{ formatear(dinero.ingresos) }}</strong></span>
-          <span>Gastos personales: <strong>{{ formatear(dinero.gastosPersonales) }}</strong></span>
-          <span>Aportes a gastos compartidos: <strong>{{ formatear(dinero.gastosCompartidos) }}</strong></span>
-        </div>
-        <div v-for="m in (dinero.porMoneda ?? []).filter((x) => x.moneda !== 'ARS')" :key="m.moneda" class="detalle" data-otra-moneda>
-          <span>{{ m.moneda }}: <strong>{{ formatearMontoEn(m.dineroActual, m.moneda) }}</strong></span>
-          <span>Ingresos: <strong>{{ formatearMontoEn(m.ingresos, m.moneda) }}</strong></span>
-          <span>Gastos: <strong>{{ formatearMontoEn(m.gastos, m.moneda) }}</strong></span>
+        <!-- Un saldo por moneda, todos con la misma jerarquía: nunca se suman pesos con dólares. -->
+        <div class="saldos">
+          <div v-for="m in saldosPorMoneda" :key="m.moneda" class="saldo" :data-saldo="m.moneda">
+            <span class="titulo-saldo">Dinero actual en {{ NOMBRE_MONEDA[m.moneda] ?? m.moneda }}</span>
+            <strong class="monto">{{ formatearMontoEn(m.dineroActual, m.moneda) }}</strong>
+            <div class="detalle">
+              <span>Ingresos: <strong>{{ formatearMontoEn(m.ingresos, m.moneda) }}</strong></span>
+              <span>Gastos personales: <strong>{{ formatearMontoEn(m.gastosPersonales, m.moneda) }}</strong></span>
+              <span>Aportes a gastos compartidos: <strong>{{ formatearMontoEn(m.gastosCompartidos, m.moneda) }}</strong></span>
+            </div>
+          </div>
         </div>
         <small class="suave">Fecha de corte: {{ dinero.fechaCorte }}</small>
       </div>
@@ -277,11 +282,13 @@ h2 { font-size: 1.2rem; margin: 0 0 12px; }
 .error-form { padding: 10px; margin-bottom: 12px; border-radius: 8px; background: var(--error-fondo); color: var(--error); }
 .aviso { padding: 10px; margin-bottom: 12px; border-radius: 8px; background: var(--superficie); border: 1px solid var(--borde); }
 .mi-plata { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--borde); border-radius: 12px; }
-.mi-plata .total { display: grid; }
-.mi-plata .total span { color: var(--texto-suave); }
-.mi-plata .total strong { font-size: 1.8rem; }
-.mi-plata .detalle { display: flex; flex-wrap: wrap; gap: 16px; color: var(--texto-suave); }
-.mi-plata .detalle strong { color: var(--texto); }
+.saldos { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px 24px; }
+.saldo { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.saldo + .saldo { border-left: 1px solid var(--borde); padding-left: 24px; }
+.titulo-saldo { color: var(--texto-suave); }
+.saldo .monto { font-size: 1.8rem; line-height: 1.15; overflow-wrap: anywhere; }
+.mi-plata .detalle { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--texto-suave); font-size: 0.9rem; }
+.mi-plata .detalle strong { color: var(--texto); white-space: nowrap; }
 .lista-recordatorios { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .recordatorio { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--borde); border-radius: 10px; }
 .recordatorio .info { display: grid; gap: 2px; min-width: 0; }
@@ -299,6 +306,8 @@ button.primario { padding: 9px 16px; border-radius: 8px; background: var(--prima
   .cabecera { align-items: stretch; }
   .recordatorio { align-items: stretch; }
   .recordatorio .primario { width: 100%; }
-  .mi-plata .total strong { font-size: 1.5rem; }
+  .saldo .monto { font-size: 1.5rem; }
+  /* Apiladas en el celular: el separador pasa a ser horizontal. */
+  .saldo + .saldo { border-left: 0; padding-left: 0; border-top: 1px solid var(--borde); padding-top: 12px; }
 }
 </style>
