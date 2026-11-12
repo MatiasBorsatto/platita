@@ -7,6 +7,7 @@ import './style.css'
 import { aplicarPreferenciaAnimaciones } from './motion/movimiento.js'
 import { configurarSesion } from './services/http.js'
 import { useSesion } from './stores/sesion.js'
+import { esArchivoViejo, recargarUnaVez } from './utils/versionNueva.js'
 
 aplicarPreferenciaAnimaciones()
 // En modo 'sistema', seguir el cambio de la configuración del sistema operativo sin recargar.
@@ -16,6 +17,15 @@ const app = createApp(App)
 app.use(createPinia())
 const router = crearRouter()
 app.use(router)
+
+// Pestaña abierta desde antes de un deploy: la pantalla pedida ya no existe con ese nombre.
+// Se recarga una vez directo a esa pantalla para traer la versión nueva.
+router.onError((error, destino) => {
+  if (esArchivoViejo(error)) recargarUnaVez(destino?.fullPath ?? window.location.href)
+})
+window.addEventListener('vite:preloadError', (evento) => {
+  if (recargarUnaVez(window.location.href)) evento.preventDefault()
+})
 
 // Sesión vencida: si había alguien conectado, se lo lleva al login y después vuelve a donde estaba.
 configurarSesion({

@@ -212,6 +212,12 @@ async function main() {
   await gastoFijo(padre, { nombre: 'Seguro del auto', diaVencimiento: 20, categoriaId: cat('Transporte'), tipoPago: 'tarjeta_debito',
     ultimosCuatro: '1234', banco: 'Banco Demo', titular: 'Carlos Pérez', alias: 'Débito sueldo',
     conceptos: [{ nombre: 'Póliza todo riesgo', montoTotal: '45000.00', recurrente: true, mesInicio: inicio }] });
+  await gastoFijo(padre, { nombre: 'Mastercard de Carlos', diaVencimiento: 26, categoriaId: cat('Otros'), tipoPago: 'tarjeta_credito',
+    ultimosCuatro: '5507', banco: 'Banco Demo', titular: 'Carlos Pérez', alias: 'Crédito personal',
+    conceptos: [
+      { nombre: 'Notebook en 6 cuotas', montoTotal: '720000.00', cuotas: 6, mesInicio: MESES[3] },
+      { nombre: 'Streaming (Netflix y Spotify)', montoTotal: '19000.00', recurrente: true, mesInicio: inicio },
+    ] });
   await gastoFijo(madre, { nombre: 'Visa familiar', diaVencimiento: 22, categoriaId: cat('Vivienda'), tipoPago: 'tarjeta_credito',
     ultimosCuatro: '4821', banco: 'Banco Demo', titular: 'Laura Gómez', alias: 'Crédito familiar',
     conceptos: [
