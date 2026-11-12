@@ -1,7 +1,8 @@
 require('dotenv').config({ quiet: true });
 
-if (!process.env.JWT_SECRET) {
-  throw new Error('Falta la variable de entorno JWT_SECRET');
+// Las dos son obligatorias: sin ellas el servidor no arranca, en lugar de fallar en la primera consulta (B-06).
+for (const variable of ['JWT_SECRET', 'DATABASE_URL']) {
+  if (!process.env[variable]) throw new Error(`Falta la variable de entorno ${variable}`);
 }
 
 module.exports = {

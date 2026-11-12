@@ -1,5 +1,8 @@
 # Auditoría completa: código frente a la documentación
 
+> **Estado al 12/11/2026:** los hallazgos M-01 a M-05, M-07 a M-10, B-02 a B-04 y B-06 a B-09 están corregidos y probados. M-06 y B-05 quedaron como decisiones documentadas. Detalle en [`auditoria-2026-11-12.md`](auditoria-2026-11-12.md), sección "Segunda pasada".
+
+
 Fecha: 10/11/2026. Rama: `feature/finanzas-jaki` (commit `7e496a7`). Este documento no modifica el código.
 
 Documentos de referencia: `docs/superpowers/specs/2026-10-27-finanzas-jaki-design.md` (spec), `docs/auditoria-y-diseno-2026-11.md` (auditoría de noviembre), `docs/instalacion.md` y `docs/vv/01` a `08`.

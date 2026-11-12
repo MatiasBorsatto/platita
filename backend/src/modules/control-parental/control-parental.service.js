@@ -3,7 +3,7 @@ const { VinculoTutor, PermisoMenor, RegistroAuditoria, Usuario, MiembroGrupo } =
 const { ErrorProhibido, ErrorNoEncontrado, ErrorValidacion } = require('../../utils/errores');
 const { hoyBA } = require('../../utils/fechas');
 const { clasificacionDe } = require('../autorizacion/autorizacion.service');
-const { clasificar } = require('../autorizacion/clasificacion');
+const { clasificar, edadA } = require('../autorizacion/clasificacion');
 const { TODOS, TARJETAS } = require('../autorizacion/permisos');
 
 const hoy = () => hoyBA().slice(0, 10);
@@ -39,7 +39,8 @@ async function listarMenores(tutorId) {
       menor: {
         id: menor.id,
         nombre: menor.nombre,
-        edad: menor.fechaNacimiento ? Math.floor(edadEnDias(menor.fechaNacimiento) / 365.25) : null,
+        // Misma cuenta exacta que la clasificación (B-04): así la edad mostrada y el permiso nunca discrepan.
+        edad: menor.fechaNacimiento ? edadA(String(menor.fechaNacimiento), hoy()) : null,
         clasificacion: clasificar(menor.fechaNacimiento, hoy()),
       },
       // Todos los permisos de la lista, con su valor. Tarjetas siempre aparecen como no concedidos.
@@ -50,10 +51,6 @@ async function listarMenores(tutorId) {
       })),
     };
   });
-}
-
-function edadEnDias(fechaNacimiento) {
-  return (Date.parse(hoy()) - Date.parse(fechaNacimiento)) / 86400000;
 }
 
 // Cambia permisos de un menor. Cada cambio se registra en la auditoría, en la misma transacción.

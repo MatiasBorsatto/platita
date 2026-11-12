@@ -162,6 +162,16 @@ test('los datos de otro usuario no aparecen (B solo ve lo suyo)', async () => {
   expect(res.body.gastosPorCategoria.map((c) => c.nombre)).not.toContain('Comida');
 });
 
+// B-09: los aportes a metas aparecen dentro de cada moneda, también cuando la moneda solo tiene aportes.
+test('los aportes a metas se informan por moneda en el resumen mensual', async () => {
+  const usd = (await agentA.post('/api/metas').send({ nombre: 'Fondo', montoObjetivo: '1000.00', moneda: 'USD' })).body;
+  await agentA.post(`/api/metas/${usd.id}/aportes`).send({ monto: '40.00', fecha: '2026-10-11' });
+  const res = await mensual(agentA);
+  expect(res.body.aportesMetas).toBe('300.00');
+  expect(res.body.porMoneda.find((m) => m.moneda === 'ARS').aportesMetas).toBe('300.00');
+  expect(res.body.porMoneda.find((m) => m.moneda === 'USD')).toMatchObject({ aportesMetas: '40.00', ingresos: '0.00' });
+});
+
 test('GET mensual no escribe notificaciones aunque un presupuesto supere el 100%', async () => {
   // catOcio ya tiene 25.00 de gasto en 2026-10; con limite 10.00 esta al 250%.
   await agentA.put('/api/presupuestos').send({ categoriaId: catOcio, mes: '2026-10', montoLimite: '10.00', regla: 'con_compartidos' });

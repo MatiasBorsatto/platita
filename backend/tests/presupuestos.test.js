@@ -131,3 +131,33 @@ test('estado suma solo gastos personales propios de la categoría y mes', async 
   });
   expect((await agentB.get('/api/presupuestos/estado?mes=2026-08')).body).toEqual([]);
 });
+
+// M-01 (CQS): consultar el estado no escribe; los avisos los genera el gasto que cruza el umbral.
+describe('avisos de presupuesto generados por los gastos', () => {
+  const { Notificacion } = require('../src/db/models');
+  const avisos = async (agent) => (await agent.get('/api/notificaciones')).body;
+
+  test('consultar el estado no crea notificaciones', async () => {
+    await agentA.put('/api/presupuestos').send({ categoriaId: catComida, mes: '2026-04', montoLimite: '10.00' });
+    const antes = await Notificacion.count();
+    const ids = (await Usuario.findAll({ where: { email: [correoA] } })).map((u) => u.id);
+    await Movimiento.create({ usuarioId: ids[0], tipo: 'gasto', alcance: 'personal', monto: '50.00', fecha: '2026-04-02', categoriaId: catComida });
+    expect((await agentA.get('/api/presupuestos/estado?mes=2026-04')).body[0].alerta).toBe('100');
+    expect(await Notificacion.count()).toBe(antes);
+  });
+
+  test('el gasto que pasa el 80 % genera el aviso una sola vez', async () => {
+    await agentA.put('/api/presupuestos').send({ categoriaId: catOcio, mes: '2026-03', montoLimite: '100.00' });
+    await agentA.post('/api/movimientos').send({ tipo: 'gasto', monto: '85.00', fecha: '2026-03-05', categoriaId: catOcio });
+    await agentA.post('/api/movimientos').send({ tipo: 'gasto', monto: '1.00', fecha: '2026-03-06', categoriaId: catOcio });
+    const delMes = (await avisos(agentA)).filter((n) => n.mensaje.includes('2026-03'));
+    expect(delMes).toHaveLength(1);
+    expect(delMes[0].mensaje).toContain('80%');
+  });
+
+  test('definir un tope ya superado avisa al instante', async () => {
+    await agentA.post('/api/movimientos').send({ tipo: 'gasto', monto: '30.00', fecha: '2026-02-05', categoriaId: catComida });
+    await agentA.put('/api/presupuestos').send({ categoriaId: catComida, mes: '2026-02', montoLimite: '20.00' });
+    expect((await avisos(agentA)).some((n) => n.mensaje.includes('Superaste') && n.mensaje.includes('2026-02'))).toBe(true);
+  });
+});

@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const { sequelize } = require('../../db/sequelize');
-const { Grupo, MiembroGrupo, Usuario } = require('../../db/models');
+const { Op } = require('sequelize');
+const { Grupo, MiembroGrupo, Usuario, VinculoTutor, RegistroAuditoria } = require('../../db/models');
+const { saldosDelGrupo } = require('../saldos/saldos.service');
 const { ErrorValidacion, ErrorConflicto, ErrorNoEncontrado } = require('../../utils/errores');
 
 const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -93,13 +95,41 @@ async function esUltimoAdmin(grupoId, miembro) {
   return admins <= 1;
 }
 
+// Un integrante con deudas o créditos sin saldar no puede irse: su saldo quedaría huérfano en el grupo.
+async function exigirSaldoCero(grupoId, usuarioId, mensaje) {
+  const saldos = await saldosDelGrupo(usuarioId, grupoId);
+  if (saldos.some((s) => s.usuarioId === usuarioId && s.saldo !== '0.00')) throw new ErrorConflicto(mensaje);
+}
+
+// Quita al integrante y, en la misma transacción, los vínculos tutor-menor del grupo en los que participa:
+// el control parental existe solo dentro del grupo. Cada vínculo eliminado queda en la auditoría.
+async function retirar(miembro, autorId) {
+  const { grupoId, usuarioId } = miembro;
+  await sequelize.transaction(async (transaction) => {
+    const vinculos = await VinculoTutor.findAll({
+      where: { grupoId, [Op.or]: [{ menorId: usuarioId }, { tutorId: usuarioId }] },
+      transaction,
+    });
+    for (const v of vinculos) {
+      // Se registra a nombre del tutor para que lo vea en la actividad del menor; autorId dice quién lo provocó.
+      await RegistroAuditoria.create({
+        usuarioId: v.tutorId, accion: 'vinculo.eliminado', entidad: 'vinculo_tutor', entidadId: v.id,
+        detalle: { menorId: v.menorId, tutorId: v.tutorId, grupoId, autorId, motivo: 'salida_del_grupo' },
+      }, { transaction });
+      await v.destroy({ transaction });
+    }
+    await miembro.destroy({ transaction });
+  });
+}
+
 async function quitarMiembro(adminId, grupoId, usuarioId) {
   const miembro = await MiembroGrupo.findOne({ where: { grupoId, usuarioId } });
   if (!miembro) throw new ErrorNoEncontrado('El usuario no es miembro del grupo');
   if (await esUltimoAdmin(grupoId, miembro)) {
     throw new ErrorConflicto('No se puede quitar al último administrador');
   }
-  await miembro.destroy();
+  await exigirSaldoCero(grupoId, usuarioId, 'Tiene saldos pendientes en el grupo: registren los pagos antes de quitarlo');
+  await retirar(miembro, adminId);
 }
 
 async function cambiarRol(grupoId, usuarioId, rol) {
@@ -119,7 +149,8 @@ async function salirDeGrupo(usuarioId, grupoId) {
   if (await esUltimoAdmin(grupoId, miembro)) {
     throw new ErrorConflicto('Sos el último administrador: designá a otro antes de salir');
   }
-  await miembro.destroy();
+  await exigirSaldoCero(grupoId, usuarioId, 'Tenés saldos pendientes en el grupo: registrá los pagos antes de salir');
+  await retirar(miembro, usuarioId);
 }
 
 module.exports = {

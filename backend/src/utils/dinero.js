@@ -48,4 +48,14 @@ function dividirEnPartes(total, cantidad) {
   return Array.from({ length: cantidad }, (_, i) => deCentavos(base + (i < sobrante ? 1n : 0n)));
 }
 
-module.exports = { validarMonto, sumar, dividirEnPartes, aCentavos, deCentavos };
+// Formato argentino para textos que ve el usuario (avisos): "$ 450.000,00" o "US$ 1.250,00".
+// Trabaja en centavos, igual que el resto del módulo: nunca con floats.
+function formatearMonto(monto, moneda = 'ARS') {
+  const centavos = aCentavos(monto);
+  const entero = (centavos / 100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const decimales = (centavos % 100n).toString().padStart(2, '0');
+  const simbolo = moneda === 'ARS' ? '$' : moneda === 'USD' ? 'US$' : moneda;
+  return `${simbolo} ${entero},${decimales}`;
+}
+
+module.exports = { validarMonto, sumar, dividirEnPartes, aCentavos, deCentavos, formatearMonto };

@@ -1,4 +1,16 @@
-const { validarMonto, sumar, dividirEnPartes } = require('../../src/utils/dinero');
+const { validarMonto, sumar, dividirEnPartes, formatearMonto } = require('../../src/utils/dinero');
+
+// Los avisos muestran los montos con el formato argentino, igual que la interfaz.
+describe('formatearMonto', () => {
+  test('pesos con separador de miles y coma decimal', () => {
+    expect(formatearMonto('450000.00')).toBe('$ 450.000,00');
+    expect(formatearMonto('0.5')).toBe('$ 0,50');
+    expect(formatearMonto('9999999999.99')).toBe('$ 9.999.999.999,99');
+  });
+  test('dólares con su símbolo', () => {
+    expect(formatearMonto('1250', 'USD')).toBe('US$ 1.250,00');
+  });
+});
 const { ErrorValidacion } = require('../../src/utils/errores');
 
 test('dividirEnPartes reparte los centavos sobrantes', () => {

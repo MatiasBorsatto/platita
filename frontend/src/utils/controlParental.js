@@ -49,3 +49,21 @@ export function agruparPermisos(permisos) {
     .filter(([, items]) => items.length > 0)
     .map(([clave, items]) => ({ clave, titulo: CATEGORIAS[clave] ?? clave, items }))
 }
+
+// Texto legible de cada registro de la auditoría del control parental, con su fecha.
+// Cubre todas las acciones que registra el backend; nunca muestra el código interno.
+export function describirActividad(a) {
+  const permiso = a.detalle?.permiso ? etiquetaDePermiso(a.detalle.permiso) : ''
+  let texto
+  if (a.accion === 'permiso.concedido') texto = `Permiso concedido: ${permiso}`
+  else if (a.accion === 'permiso.retirado') texto = `Permiso retirado: ${permiso}`
+  else if (a.accion === 'vinculo.creado') texto = 'Quedó vinculado al grupo'
+  else if (a.accion === 'vinculo.eliminado') {
+    texto = a.detalle?.motivo === 'salida_del_grupo' ? 'Se desvinculó al salir del grupo' : 'Se quitó el vínculo'
+  } else texto = 'Cambio registrado'
+  if (!a.creadoEn) return texto
+  const f = new Date(a.creadoEn)
+  if (Number.isNaN(f.getTime())) return texto
+  const fecha = f.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return `${fecha} · ${texto}`
+}

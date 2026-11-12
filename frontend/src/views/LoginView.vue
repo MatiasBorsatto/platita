@@ -28,6 +28,9 @@ async function enviar() {
 <template>
   <main class="tarjeta-acceso">
     <h1>Iniciar sesión</h1>
+    <p v-if="router.currentRoute?.value?.query?.motivo === 'expirada'" class="aviso-sesion" role="status">
+      Tu sesión venció. Ingresá de nuevo para seguir donde estabas.
+    </p>
     <form @submit.prevent="enviar">
       <label>Email
         <input v-model="email" type="email" autocomplete="email" required />

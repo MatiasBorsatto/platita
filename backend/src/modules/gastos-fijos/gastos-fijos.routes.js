@@ -5,6 +5,7 @@ const { validarUuid, validarMes } = require('../movimientos/movimientos.validati
 const { hoyBA } = require('../../utils/fechas');
 const { validarGastoFijo, validarConcepto, validarPago } = require('./gastos-fijos.validation');
 const service = require('./gastos-fijos.service');
+const presupuestos = require('../presupuestos/presupuestos.service');
 const { paginar } = require('../../utils/paginacion');
 const { exigir, clasificacionDe } = require('../autorizacion/autorizacion.service');
 const { PERMISOS } = require('../autorizacion/permisos');
@@ -130,9 +131,10 @@ router.delete('/:id/conceptos/:conceptoId', editarExistente, async (req, res) =>
 });
 
 router.post('/:id/cuotas/:cuotaId/pagar', editarExistente, async (req, res) => {
-  res.json(
-    await service.pagarCuota(req.usuario.id, req.params.id, req.params.cuotaId, validarPago(req.body))
-  );
+  const pago = await service.pagarCuota(req.usuario.id, req.params.id, req.params.cuotaId, validarPago(req.body));
+  // Pagar una cuota crea un gasto: se revisan los presupuestos de ese mes.
+  await presupuestos.revisarAlertas([req.usuario.id], [pago.movimiento.fecha]);
+  res.json(pago);
 });
 
 router.post('/:id/cuotas/:cuotaId/deshacer-pago', editarExistente, async (req, res) => {

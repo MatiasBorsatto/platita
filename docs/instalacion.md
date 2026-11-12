@@ -20,7 +20,7 @@ cd finanzas-jaki
 Copiar `backend/.env.example` a `backend/.env` y completar los valores:
 
 ```bash
-DATABASE_URL=postgresql://usuario:clave@host/base?sslmode=require
+DATABASE_URL=postgresql://usuario:clave@host/base?sslmode=verify-full
 JWT_SECRET=una-cadena-larga-y-aleatoria
 ```
 
@@ -84,5 +84,5 @@ Las pruebas de backend usan la base definida en `DATABASE_URL` y crean y borran 
 ## Solución de problemas
 
 - **"Falta la variable de entorno JWT_SECRET":** el archivo `.env` no existe o no está en `backend/`.
-- **Errores de conexión a la base:** revisar que `DATABASE_URL` tenga `sslmode=require`.
+- **Errores de conexión a la base:** revisar que `DATABASE_URL` tenga `sslmode=verify-full`.
 - **El frontend no recibe datos:** el backend tiene que estar corriendo en el puerto 3000.

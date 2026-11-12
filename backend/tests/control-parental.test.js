@@ -129,4 +129,23 @@ describe('control parental', () => {
     expect(grupo).toBeDefined();
     expect(grupo.codigo).toBeUndefined();
   });
+
+  // M-08: el control parental existe solo dentro del grupo. Al salir, el vínculo se elimina y queda registrado.
+  test('si el menor sale del grupo, el vínculo se elimina y vuelve a sus funciones personales', async () => {
+    expect(await VinculoTutor.count({ where: { menorId: menor.id, grupoId } })).toBe(1);
+    expect((await menor.agent.post(`/api/grupos/${grupoId}/salir`)).status).toBe(204);
+    expect(await VinculoTutor.count({ where: { menorId: menor.id, grupoId } })).toBe(0);
+    expect((await menor.agent.get('/api/movimientos')).status).toBe(200);
+    const actividad = await tutor.agent.get(`/api/control-parental/menores/${menor.id}/actividad`);
+    expect(actividad.status).toBe(200);
+    expect(actividad.body.some((a) => a.accion === 'vinculo.eliminado' && a.detalle?.motivo === 'salida_del_grupo')).toBe(true);
+  });
+
+  test('un vínculo de un grupo del que el menor ya no es miembro no da permisos', async () => {
+    // Vínculo huérfano creado a mano (como los que quedaban antes de la corrección).
+    const vinculo = await VinculoTutor.create({ tutorId: tutor.id, menorId: menor.id, grupoId });
+    expect((await menor.agent.get('/api/movimientos')).status).toBe(200);
+    expect((await menor.agent.get(`/api/grupos/${grupoId}/gastos`)).status).toBe(404);
+    await vinculo.destroy();
+  });
 });

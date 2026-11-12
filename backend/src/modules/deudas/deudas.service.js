@@ -32,6 +32,12 @@ async function listarDeudas(usuarioId) {
 
   const mesHoy = hoy.slice(0, 7);
   const visibles = [];
+  // El permiso depende solo del grupo: se calcula una vez por grupo, no una vez por cuota (M-02).
+  const permisoPorGrupo = new Map();
+  const puedeVerGrupo = async (grupoId) => {
+    if (!permisoPorGrupo.has(grupoId)) permisoPorGrupo.set(grupoId, await puede(usuarioId, PERMISOS.GASTOS_VER_GRUPO, { grupoId }));
+    return permisoPorGrupo.get(grupoId);
+  };
   for (const c of cuotas) {
     const gasto = c.GastoFijo;
     // Un gasto recurrente todavía no es deuda en meses futuros, aunque ya exista la cuota
@@ -39,7 +45,7 @@ async function listarDeudas(usuarioId) {
     if (c.concepto.cuotas === null && c.mes > mesHoy) continue;
     if (gasto.usuarioId !== usuarioId) {
       // Gasto de otro integrante del grupo: solo si este usuario puede ver los gastos del grupo.
-      if (!(await puede(usuarioId, PERMISOS.GASTOS_VER_GRUPO, { grupoId: gasto.grupoId }))) continue;
+      if (!(await puedeVerGrupo(gasto.grupoId))) continue;
     }
     visibles.push({
       id: c.id,

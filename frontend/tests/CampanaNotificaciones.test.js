@@ -58,3 +58,17 @@ describe('CampanaNotificaciones', () => {
     wrapper.unmount()
   })
 })
+
+// P-05: al montarse, la campana pide las notificaciones una sola vez.
+describe('CampanaNotificaciones: carga inicial', () => {
+  it('hace un solo pedido al montarse', async () => {
+    const api = await import('../src/services/notificaciones.js')
+    api.listarNotificaciones.mockClear()
+    const { mount, flushPromises } = await import('@vue/test-utils')
+    const { default: Campana } = await import('../src/components/CampanaNotificaciones.vue')
+    const w = mount(Campana)
+    await flushPromises()
+    expect(api.listarNotificaciones).toHaveBeenCalledTimes(1)
+    w.unmount()
+  })
+})

@@ -161,6 +161,7 @@ A lo largo del proceso se aplicaron buenas prácticas de ingeniería de software
 * **Transaccionalidad en operaciones complejas:** En los gastos compartidos y la edición de movimientos vinculados a metas, todas las escrituras se englobaron en transacciones ACID de Sequelize para evitar datos huérfanos.
 * **Evolución del modelo:** Inicialmente se incluyó un módulo de tarjetas de crédito que posteriormente fue reemplazado por un modelo más flexible y realista de **Gastos Fijos** (migración `013-gastos-fijos.js`), permitiendo modelar cuotas finitas y compromisos recurrentes mensuales sin atarse a resúmenes bancarios rígidos.
 * **Funciones incorporadas en la etapa final:** control parental (un menor sin tutor solo accede a sus funciones personales; con tutor, a lo que este le habilite), soporte multimoneda en movimientos, presupuestos, metas y gastos fijos (migraciones 017 a 019), y un recorrido guiado interactivo por todos los módulos, que se muestra en el primer ingreso y se puede repetir desde el botón de ayuda.
+* **QA final previo a la presentación (12/11/2026):** una pasada estricta cerró 20 hallazgos, cada uno con su prueba automatizada. Entre ellos: las alertas de presupuesto pasaron a generarse solo ante cambios en los gastos (las consultas ya no escriben, CQS); el pago doble simultáneo de una cuota quedó bloqueado; los vínculos de control parental se eliminan al salir del grupo; la sesión vencida lleva al login. En velocidad, los recordatorios bajaron de 1,57 s a 0,50 s y la primera carga del frontend de 176 kB a 93,6 kB. Detalle en `docs/auditoria-2026-11-12.md`.
 * **Control de versiones de código y despliegue continuo:** Cada push a la rama `main` activó automáticamente la compilación del frontend en Netlify; el backend se actualiza en el servidor propio y se reinicia con `systemctl restart finanzas-backend`.
 
 ---
@@ -356,13 +357,13 @@ cd frontend && npm test
 
 | Suite | Motor | Archivos de Prueba | Casos Ejecutados | Tasa de Éxito |
 |---|---|---|---|---|
-| **Backend API & Lógica** | Jest + Supertest | 34 archivos | 250 pruebas | **100 % (250/250 aprobadas)** |
-| **Frontend UI & Tiendas** | Vitest + Vue Test Utils | 28 archivos | 99 pruebas | **100 % (99/99 aprobadas)** |
-| **Total Global Automatizado** | — | **62 archivos** | **349 pruebas** | **100 % Aprobación** |
+| **Backend API & Lógica** | Jest + Supertest | 34 archivos | 263 pruebas | **100 % (263/263 aprobadas)** |
+| **Frontend UI & Tiendas** | Vitest + Vue Test Utils | 28 archivos | 105 pruebas | **100 % (105/105 aprobadas)** |
+| **Total Global Automatizado** | — | **62 archivos** | **368 pruebas** | **100 % Aprobación** |
 
 ### 17.3 Ventajas y Limitaciones Observadas
 * **Ventajas:**
-  * Velocidad de ejecución: las 349 pruebas se completan en menos de 15 segundos en total.
+  * Velocidad de ejecución: las 368 pruebas se completan en menos de 15 segundos en total.
   * Detección temprana de regresiones ante cambios en esquemas de base de datos o lógica de negocio.
   * Las pruebas de API verifican restricciones reales de base de datos (claves foráneas, índices de unicidad y triggers), no simulaciones en memoria.
 * **Limitaciones:**
@@ -486,9 +487,9 @@ A continuación se sintetiza el balance cuantitativo de las actividades de V&V d
 ========================================================================
   • Casos de prueba formales diseñados:             23 casos
   • Casos de prueba ejecutados manualmente:         17 casos (100 % completados)
-  • Pruebas automatizadas de Backend (Jest):        250 pruebas (100 % exitosas)
-  • Pruebas automatizadas de Frontend (Vitest):     99 pruebas (100 % exitosas)
-  • Total de pruebas automatizadas en suite:        349 pruebas aprobadas
+  • Pruebas automatizadas de Backend (Jest):        263 pruebas (100 % exitosas)
+  • Pruebas automatizadas de Frontend (Vitest):     105 pruebas (100 % exitosas)
+  • Total de pruebas automatizadas en suite:        368 pruebas aprobadas
   • Pruebas de sistema sobre entorno integrado:     16 pruebas evaluadas
   • Defectos identificados y registrados:           16 defectos
   • Tasa de resolución y cierre de defectos:        100 % (16 / 16 cerrados)
@@ -506,7 +507,7 @@ El proyecto **Platita** ha demostrado satisfacer plenamente los objetivos funcio
 ### 24.1 Respuesta a la Pregunta Fundamental de Validación
 > **¿El sistema satisface las necesidades planteadas al comienzo del proyecto?**
 > 
-> **Sí, de forma concluyente.** La aplicación permite a los usuarios registrar sus operaciones de ingresos y gastos con certeza matemática de centavos, proyectar compromisos periódicos mediante gastos fijos, mantener control de presupuestos mediante alarmas oportunas y administrar economías familiares compartidas sin desbalances ni ambigüedades. Las pruebas automatizadas (349 pruebas) y las validaciones de sistema en navegadores móviles y de escritorio constituyen la evidencia fehaciente de su solidez operativa.
+> **Sí, de forma concluyente.** La aplicación permite a los usuarios registrar sus operaciones de ingresos y gastos con certeza matemática de centavos, proyectar compromisos periódicos mediante gastos fijos, mantener control de presupuestos mediante alarmas oportunas y administrar economías familiares compartidas sin desbalances ni ambigüedades. Las pruebas automatizadas (368 pruebas) y las validaciones de sistema en navegadores móviles y de escritorio constituyen la evidencia fehaciente de su solidez operativa.
 
 ### 24.2 Principales Aprendizajes del Proceso de V&V
 1. **La exactitud numérica no se negocia:** El tratamiento de dinero en aplicaciones web debe realizarse invariablemente mediante aritmética de enteros (centavos) en la capa de negocio, protegiendo las bases de datos con validaciones rigurosas en los valores límite superiores e inferiores.

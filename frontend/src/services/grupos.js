@@ -21,3 +21,6 @@ export const eliminarAporte = (id, gastoId, aporteId) =>
 export const listarSaldos = (id) => http.get(`/grupos/${id}/saldos`)
 export const registrarPago = (id, datos) => http.post(`/grupos/${id}/pagos`, datos)
 export const listarPagos = (id) => http.get(`/grupos/${id}/pagos`)
+// Saldo de cada miembro al cierre de cada mes (gráfico del detalle del grupo).
+export const saldosHistoricos = (id, { desde, hasta, moneda = 'ARS' }) =>
+  http.get(`/grupos/${id}/saldos/historico?desde=${desde}&hasta=${hasta}&moneda=${moneda}`)

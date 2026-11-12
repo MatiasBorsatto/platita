@@ -112,29 +112,32 @@ El texto está pensado para decirlo con las propias palabras. Cada bloque tiene 
 >
 > Para saber que no cambió ningún resultado, una prueba compara la versión optimizada contra la original, mes a mes.
 >
-> Además sumamos paginación, 36 índices en la base y pantallas de carga. Las consultas responden en menos de 200 milisegundos.
+> Además:
+> - Los recordatorios de vencimientos pasaron de 1,5 segundos a medio segundo.
+> - La app ya no se descarga entera: cada módulo baja cuando se abre, y la primera carga pesa casi la mitad.
+> - Hay paginación e índices en la base, y las consultas responden en menos de 200 milisegundos.
 
 ---
 
 ## 8. Demo en vivo — 6:00 · MATÍAS y TOMÁS (2 min 30 s)
 
-**Preparar antes:** sesión abierta con la cuenta adulta (con datos cargados) y, en otra ventana, la cuenta del menor.
+**Preparar antes:** sesión de **Carlos Pérez** (`padre@demo.platita.test`) en una ventana y de **Tomi Pérez** (`hijo1@demo.platita.test`) en otra ventana privada. La contraseña está en la variable `DEMO_CLAVE` de `backend/.env` (no se sube al repositorio).
 
 ### MATÍAS — uso personal (6:00, 1 min 15 s)
 
 | Paso | Acción | Qué decir |
 |---|---|---|
-| 1 | **Movimientos**: cargar `30000` y tocar **Guardar** dos veces rápido | "Se formatea mientras escribo, y el doble clic guarda una sola vez." |
-| 2 | **Presupuestos**: una barra cerca del tope | "Amarilla al 80 %, roja al pasarse, y llega un aviso." |
-| 3 | **Gastos fijos**: uno con tarjeta y **Pagar** | "Solo los últimos 4 dígitos. Al pagar, se anota solo." |
+| 1 | **Movimientos**: cargar `30000` en Alimentos y tocar **Guardar** dos veces rápido | "Se formatea mientras escribo, y el doble clic guarda una sola vez." |
+| 2 | **Presupuestos**: Alimentos al 82 % y Entretenimiento al 120 %; abrir la campana | "Amarilla al 80 %, roja al pasarse, y llega un aviso." |
+| 3 | **Gastos fijos**: "Seguro del auto" (débito ••••1234) y, en "Tenemos que pagar", **Pagar** el alquiler vencido | "Solo los últimos 4 dígitos. Al pagar, se anota solo." |
 
 ### TOMÁS — uso familiar (7:15, 1 min 15 s)
 
 | Paso | Acción | Qué decir |
 |---|---|---|
-| 1 | **Grupos**: gasto de `$100` entre 3 y ver saldos | "33,34 + 33,33 + 33,33: no se pierde ni un centavo, y la app dice quién le debe a quién." |
-| 2 | **Control parental**: activar un permiso | "Cada cambio queda registrado. Las tarjetas aparecen bloqueadas: no se pueden activar." |
-| 3 | Ventana del menor: entrar a algo no habilitado | "El servidor lo rechaza. No depende de esconder un botón." |
+| 1 | **Grupos > Familia Pérez**: gasto de `10000,02` en partes iguales y ver saldos | "2.500,01 + 2.500,01 + 2.500 + 2.500: no se pierde ni un centavo, y la app dice quién le debe a quién." |
+| 2 | **Control parental**: activar "Visualizar estadísticas" a Sofi y abrir "Actividad" | "Cada cambio queda registrado. Las tarjetas aparecen bloqueadas: no se pueden activar." |
+| 3 | Ventana de Tomi: abrir **Estadísticas** | "'No tenés permiso': el servidor lo rechaza. No depende de esconder un botón." |
 
 > Si algo tarda, la base se está despertando. Decirlo con naturalidad y seguir.
 
@@ -151,9 +154,9 @@ El texto está pensado para decirlo con las propias palabras. Cada bloque tiene 
 
 ### TOMÁS (9:00, 30 s)
 
-> Hoy hay **349 pruebas automatizadas**, todas aprobadas:
-> - 250 de backend, contra una base real;
-> - 99 de frontend.
+> Hoy hay **368 pruebas automatizadas**, todas aprobadas:
+> - 263 de backend, contra una base real;
+> - 105 de frontend.
 >
 > Registramos y cerramos 16 defectos. Ninguna corrección entra sin correr todo. Eso nos dejó hacer los cambios que pidió la profe sin romper lo anterior.
 
@@ -180,10 +183,14 @@ El texto está pensado para decirlo con las propias palabras. Cada bloque tiene 
 
 - [ ] Prender el servidor 10 minutos antes. Arranca solo el backend y ngrok.
 - [ ] `https://touched-woodcock-upright.ngrok-free.app/api/health` devuelve `{"estado":"ok"}`.
-- [ ] Cuentas de demo preparadas:
-  - un adulto con movimientos, un presupuesto cerca del tope y un gasto fijo con tarjeta;
-  - un grupo con dos adultos y un menor vinculado;
-  - la sesión del menor abierta en otra ventana.
+- [ ] Datos de demo cargados: la familia Pérez con seis meses de uso. Para dejarlos como nuevos antes de presentar, desde `backend`:
+
+  ```bash
+  ENTORNO_DEMO=true node scripts/demo-seed.js --reiniciar
+  ```
+
+  Cuentas: Carlos Pérez (adulto, administra el grupo), Laura Gómez (adulta), Tomi Pérez (13, sin estadísticas ni presupuestos) y Sofi Pérez (10). Todas usan `@demo.platita.test`.
+- [ ] Sesión de Carlos en una ventana y de Tomi en otra ventana privada.
 - [ ] **Perfil > Animaciones**: "Activadas".
 - [ ] `diapositivas.html` abierto en pantalla completa (F).
 - [ ] Usar la app 5 minutos antes, para despertar la base.

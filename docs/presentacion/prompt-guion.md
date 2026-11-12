@@ -21,7 +21,7 @@ Datos actuales que el guion debe respetar:
 - Frontend Vue 3 en Netlify; backend Node.js + Express 5 en un servidor Ubuntu propio como servicio
   systemd, expuesto con un túnel ngrok de dominio fijo; base PostgreSQL en Neon con TLS estricto.
 - 19 migraciones Sequelize; dinero en centavos con BigInt; bcryptjs 3; JWT en cookies httpOnly.
-- 349 pruebas automatizadas: 250 de backend (34 archivos, Jest + Supertest) y 99 de frontend
+- 368 pruebas automatizadas: 263 de backend (34 archivos, Jest + Supertest) y 105 de frontend
   (28 archivos, Vitest + Vue Test Utils), todas aprobadas.
 - 23 casos formales (CN-01 a CN-23), 16 defectos registrados y cerrados (D-01 a D-16), 5 hallazgos de
   revisión del artefacto docs/instalacion.md (R-01 a R-05).

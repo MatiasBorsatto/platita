@@ -1,5 +1,20 @@
 import { describe, it, expect } from 'vitest'
-import { agruparPermisos, etiquetaDePermiso } from '../src/utils/controlParental.js'
+import { agruparPermisos, etiquetaDePermiso, describirActividad } from '../src/utils/controlParental.js'
+
+describe('actividad del control parental', () => {
+  it('describe cada acción del backend sin mostrar el código interno', () => {
+    expect(describirActividad({ accion: 'permiso.concedido', detalle: { permiso: 'estadisticas.ver' } })).toBe('Permiso concedido: Visualizar estadísticas')
+    expect(describirActividad({ accion: 'permiso.retirado', detalle: { permiso: 'movimientos.ver' } })).toBe('Permiso retirado: Consultar movimientos')
+    expect(describirActividad({ accion: 'vinculo.creado', detalle: {} })).toBe('Quedó vinculado al grupo')
+    expect(describirActividad({ accion: 'vinculo.eliminado', detalle: { motivo: 'salida_del_grupo' } })).toBe('Se desvinculó al salir del grupo')
+    expect(describirActividad({ accion: 'otra.cosa' })).toBe('Cambio registrado')
+  })
+
+  it('antepone la fecha cuando existe', () => {
+    const t = describirActividad({ accion: 'vinculo.creado', creadoEn: '2026-11-12T15:30:00Z' })
+    expect(t).toMatch(/^\d{2}\/\d{2}\/2026.* · Quedó vinculado al grupo$/)
+  })
+})
 
 describe('agrupación de permisos del control parental', () => {
   const permisos = [

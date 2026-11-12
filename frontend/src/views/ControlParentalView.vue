@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { listarMenores, vincularMenor, cambiarPermisos, desvincularMenor, actividadDelMenor } from '../services/controlParental.js'
 import { listarGrupos } from '../services/grupos.js'
 import { confirmar } from '../services/dialogo.js'
-import { agruparPermisos, etiquetaDePermiso } from '../utils/controlParental.js'
+import { agruparPermisos, etiquetaDePermiso, describirActividad } from '../utils/controlParental.js'
 import CargandoIndicador from '../components/CargandoIndicador.vue'
 
 const menores = ref([])
@@ -76,11 +76,6 @@ async function verActividad(menor) {
   actividad.value = { ...actividad.value, [menor.menor.id]: await actividadDelMenor(menor.menor.id) }
 }
 
-const textoAccion = (a) => {
-  if (a.accion === 'permiso.concedido') return 'Concedido'
-  if (a.accion === 'permiso.retirado') return 'Retirado'
-  return a.accion
-}
 </script>
 
 <template>
@@ -137,7 +132,7 @@ const textoAccion = (a) => {
         <summary>Actividad</summary>
         <ul v-if="actividad[m.menor.id]?.length" class="actividad">
           <li v-for="(a, i) in actividad[m.menor.id]" :key="i">
-            {{ textoAccion(a) }}: {{ a.detalle?.permiso ? etiquetaDePermiso(a.detalle.permiso) : '' }}
+            {{ describirActividad(a) }}
           </li>
         </ul>
         <p v-else class="suave">Sin cambios registrados.</p>

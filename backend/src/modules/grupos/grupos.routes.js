@@ -6,6 +6,7 @@ const { ErrorValidacion, ErrorNoEncontrado } = require('../../utils/errores');
 const service = require('./grupos.service');
 const invitaciones = require('./invitaciones.service');
 const compartidos = require('../movimientos/compartidos.service');
+const presupuestos = require('../presupuestos/presupuestos.service');
 const { requierePermiso } = require('../../middlewares/requierePermiso');
 const { PERMISOS } = require('../autorizacion/permisos');
 
@@ -81,9 +82,14 @@ router.delete('/:id/invitaciones/:invitacionId', grupoAccesible('admin'), gestio
   res.status(204).end();
 });
 
+// Un gasto compartido suma a los presupuestos de cada participante: se revisan sus avisos.
+const participantesDe = (gasto) => (gasto.participaciones ?? []).map((p) => p.usuarioId);
+
 router.post('/:id/gastos', grupoAccesible(), crearGastos, async (req, res) => {
   const datos = validarGastoCompartido(req.body);
-  res.status(201).json(await compartidos.crearGastoCompartido(req.usuario.id, { ...datos, grupoId: req.grupoId }));
+  const gasto = await compartidos.crearGastoCompartido(req.usuario.id, { ...datos, grupoId: req.grupoId });
+  await presupuestos.revisarAlertas(participantesDe(gasto), [gasto.fecha]);
+  res.status(201).json(gasto);
 });
 
 router.get('/:id/gastos', grupoAccesible(), verGastos, async (req, res) => {
@@ -95,7 +101,9 @@ router.get('/:id/gastos', grupoAccesible(), verGastos, async (req, res) => {
 router.patch('/:id/gastos/:movimientoId', grupoAccesible(), crearGastos, async (req, res) => {
   const movimientoId = idGasto(req.params.movimientoId);
   const datos = validarEdicionGastoCompartido(req.body);
-  res.json(await compartidos.editarGastoCompartido(req.usuario.id, req.grupoId, movimientoId, datos));
+  const gasto = await compartidos.editarGastoCompartido(req.usuario.id, req.grupoId, movimientoId, datos);
+  await presupuestos.revisarAlertas(participantesDe(gasto), [gasto.fecha]);
+  res.json(gasto);
 });
 
 router.delete('/:id/gastos/:movimientoId', grupoAccesible(), crearGastos, async (req, res) => {

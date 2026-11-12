@@ -145,3 +145,18 @@ test('saldosHistoricos acumula hasta fin de cada mes, incluye pagos y exige ser 
   await expect(saldosHistoricos(ajeno.id, grupoId, '2026-02', '2026-02')).rejects.toThrow();
   await Usuario.destroy({ where: { id: ajeno.id } });
 });
+
+// M-07: la evolución de saldos tiene ruta propia, con nombres y separada por moneda.
+test('GET /grupos/:id/saldos/historico devuelve los saldos por mes con nombres y por moneda', async () => {
+  const res = await agentA.get(`/api/grupos/${grupoId}/saldos/historico?desde=2026-03&hasta=2026-04`);
+  expect(res.status).toBe(200);
+  expect(res.body).toHaveLength(2);
+  expect(res.body[1].moneda).toBe('ARS');
+  const a = res.body[1].saldos.find((s) => s.usuarioId === ids.a);
+  expect(a).toMatchObject({ saldo: '15.00' });
+  expect(typeof a.nombre).toBe('string');
+  const enDolares = await agentA.get(`/api/grupos/${grupoId}/saldos/historico?desde=2026-04&hasta=2026-04&moneda=USD`);
+  expect(enDolares.body[0].saldos.every((s) => s.saldo === '0.00')).toBe(true);
+  expect((await agentA.get(`/api/grupos/${grupoId}/saldos/historico?desde=2026-04`)).status).toBe(400);
+  expect((await agentA.get(`/api/grupos/${grupoId}/saldos/historico?desde=2024-01&hasta=2026-04`)).status).toBe(400);
+});

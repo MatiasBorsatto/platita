@@ -1,7 +1,8 @@
 const { Router } = require('express');
 const { autenticar } = require('../../middlewares/autenticar');
 const { grupoAccesible } = require('../../middlewares/grupoAccesible');
-const { validarUuid, validarFecha } = require('../movimientos/movimientos.validation');
+const { validarUuid, validarFecha, validarMes } = require('../movimientos/movimientos.validation');
+const historico = require('../estadisticas/historico.service');
 const { validarMonto } = require('../../utils/dinero');
 const { ErrorValidacion } = require('../../utils/errores');
 const service = require('./saldos.service');
@@ -38,6 +39,15 @@ function validarPago(body = {}) {
 
 router.get('/:id/saldos', grupoAccesible(), verGastos, async (req, res) => {
   res.json(await service.saldosDelGrupo(req.usuario.id, req.grupoId));
+});
+
+// Evolución de los saldos del grupo mes a mes (M-07), para el gráfico del detalle del grupo.
+router.get('/:id/saldos/historico', grupoAccesible(), verGastos, async (req, res) => {
+  if (req.query.desde === undefined || req.query.hasta === undefined) {
+    throw new ErrorValidacion('Los parámetros desde y hasta son obligatorios');
+  }
+  const moneda = req.query.moneda === undefined ? 'ARS' : validarMonedaPago(req.query.moneda);
+  res.json(await historico.saldosHistoricos(req.usuario.id, req.grupoId, validarMes(req.query.desde), validarMes(req.query.hasta), moneda));
 });
 
 router.post('/:id/pagos', grupoAccesible(), crearGastos, async (req, res) => {

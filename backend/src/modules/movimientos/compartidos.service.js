@@ -269,6 +269,11 @@ async function registrarAporte(usuarioId, grupoId, movimientoId, { usuarioId: ap
   if (!(await esMiembro(grupoId, objetivo))) {
     throw new ErrorValidacion('Quien aporta debe ser miembro del grupo');
   }
+  // B-02: lo aportado no puede superar el gasto; el excedente contaría como gasto en "Mi plata".
+  const previos = await AporteGasto.findAll({ where: { movimientoId: mov.id }, attributes: ['monto'] });
+  if (aCentavos(sumar([...previos.map((a) => a.monto), monto])) > aCentavos(mov.monto)) {
+    throw new ErrorValidacion('Los aportes no pueden superar el monto del gasto');
+  }
   const aporte = await AporteGasto.create({
     movimientoId: mov.id,
     usuarioId: objetivo,

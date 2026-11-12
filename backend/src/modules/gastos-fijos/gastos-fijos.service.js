@@ -5,8 +5,9 @@ const {
   ConceptoGastoFijo,
   CuotaGastoFijo,
   Movimiento,
+  Notificacion,
 } = require('../../db/models');
-const { aCentavos, deCentavos, sumar } = require('../../utils/dinero');
+const { aCentavos, deCentavos, sumar, dividirEnPartes, formatearMonto } = require('../../utils/dinero');
 const { hoyBA, diaValido } = require('../../utils/fechas');
 const { ErrorValidacion, ErrorNoEncontrado } = require('../../utils/errores');
 const { verificarCategoria, rangoDelMes } = require('../movimientos/movimientos.service');
@@ -87,8 +88,9 @@ function seConserva(cuota, hoy) {
   return cuota.estado === 'pagado' || cuota.fechaVencimiento < hoy;
 }
 
-async function generarCuotasDeConcepto(concepto, { transaction, hasta = null, mesesAtras = 12 } = {}) {
-  const gasto = await GastoFijo.findByPk(concepto.gastoFijoId, { transaction });
+// gasto y existentes son opcionales: quien ya los tiene cargados los pasa y se ahorran consultas.
+async function generarCuotasDeConcepto(concepto, { transaction, hasta = null, mesesAtras = 12, gasto: gastoCargado = null, existentes = null } = {}) {
+  const gasto = gastoCargado ?? (await GastoFijo.findByPk(concepto.gastoFijoId, { transaction }));
   const hoy = hoyBA();
   const mesHoy = hoy.slice(0, 7);
 
@@ -107,21 +109,10 @@ async function generarCuotasDeConcepto(concepto, { transaction, hasta = null, me
     }
     let [ia, im] = inicio.split('-').map(Number);
     const [ta, tm] = (hasta || mesHoy).split('-').map(Number);
+    const filas = [];
     while (ia * 12 + im <= ta * 12 + tm) {
       const m = `${ia}-${String(im).padStart(2, '0')}`;
-      await CuotaGastoFijo.findOrCreate({
-        where: { conceptoId: concepto.id, mes: m },
-        defaults: {
-          gastoFijoId: concepto.gastoFijoId,
-          conceptoId: concepto.id,
-          usuarioId: gasto.usuarioId,
-          mes: m,
-          monto: concepto.montoTotal,
-          fechaVencimiento: fechaVencimiento(m, gasto.diaVencimiento),
-          estado: 'pendiente',
-        },
-        transaction,
-      });
+      filas.push({ mes: m, monto: concepto.montoTotal, fechaVencimiento: fechaVencimiento(m, gasto.diaVencimiento) });
       if (im === 12) {
         ia += 1;
         im = 1;
@@ -129,6 +120,7 @@ async function generarCuotasDeConcepto(concepto, { transaction, hasta = null, me
         im += 1;
       }
     }
+    await crearFaltantes(concepto, gasto, filas, transaction, existentes);
     return;
   }
 
@@ -138,22 +130,30 @@ async function generarCuotasDeConcepto(concepto, { transaction, hasta = null, me
     mesInicio: concepto.mesInicio,
     diaVencimiento: gasto.diaVencimiento,
   });
-  for (const f of filas) {
-    // Las cuotas vencidas también se crean: se muestran como deuda en el módulo Deudas.
-    await CuotaGastoFijo.findOrCreate({
-      where: { conceptoId: concepto.id, mes: f.mes },
-      defaults: {
-        gastoFijoId: concepto.gastoFijoId,
-        conceptoId: concepto.id,
-        usuarioId: gasto.usuarioId,
-        mes: f.mes,
-        monto: f.monto,
-        fechaVencimiento: f.fechaVencimiento,
-        estado: 'pendiente',
-      },
-      transaction,
-    });
-  }
+  // Las cuotas vencidas también se crean: se muestran como deuda en el módulo Deudas.
+  await crearFaltantes(concepto, gasto, filas, transaction, existentes);
+}
+
+// Crea solo las cuotas que todavía no existen (M-02): una lectura de los meses ya generados y una sola
+// inserción, en lugar de un findOrCreate por mes. El índice único (conceptoId, mes) evita duplicados
+// aunque dos pedidos lleguen a la vez.
+async function crearFaltantes(concepto, gasto, filas, transaction, existentesCargados = null) {
+  if (!filas.length) return;
+  const existentes = existentesCargados ?? new Set(
+    (await CuotaGastoFijo.findAll({ where: { conceptoId: concepto.id }, attributes: ['mes'], transaction })).map((c) => c.mes)
+  );
+  const nuevas = filas
+    .filter((f) => !existentes.has(f.mes))
+    .map((f) => ({
+      gastoFijoId: concepto.gastoFijoId,
+      conceptoId: concepto.id,
+      usuarioId: gasto.usuarioId,
+      mes: f.mes,
+      monto: f.monto,
+      fechaVencimiento: f.fechaVencimiento,
+      estado: 'pendiente',
+    }));
+  if (nuevas.length) await CuotaGastoFijo.bulkCreate(nuevas, { transaction, ignoreDuplicates: true });
 }
 
 async function listarGastosFijos(usuarioId) {
@@ -219,13 +219,24 @@ async function listarGastosFijos(usuarioId) {
   });
 }
 
+// B-08: el gasto y todos sus conceptos se crean juntos; si falla uno, no queda nada a medias.
 async function crearGastoFijo(usuarioId, datos) {
   await verificarCategoria(usuarioId, datos.categoriaId);
-  const gasto = await GastoFijo.create({ ...datos, usuarioId });
-  if (datos.conceptos && datos.conceptos.length) {
-    for (const c of datos.conceptos) await crearConcepto(usuarioId, gasto.id, c);
-  }
-  return obtenerGastoFijo(usuarioId, gasto.id);
+  const id = await sequelize.transaction(async (transaction) => {
+    const gasto = await GastoFijo.create({ ...datos, usuarioId }, { transaction });
+    for (const c of datos.conceptos ?? []) {
+      const concepto = await ConceptoGastoFijo.create({
+        gastoFijoId: gasto.id,
+        nombre: c.nombre,
+        montoTotal: c.montoTotal,
+        cuotas: c.cuotas ?? null,
+        mesInicio: c.mesInicio,
+      }, { transaction });
+      await generarCuotasDeConcepto(concepto, { transaction });
+    }
+    return gasto.id;
+  });
+  return obtenerGastoFijo(usuarioId, id);
 }
 
 async function editarGastoFijo(usuarioId, id, datos) {
@@ -293,6 +304,11 @@ async function editarConcepto(usuarioId, gastoFijoId, conceptoId, datos) {
   const cambiaMonto = datos.montoTotal !== undefined && String(datos.montoTotal) !== String(concepto.montoTotal);
   const cambiaCuotas = datos.cuotas !== undefined && datos.cuotas !== concepto.cuotas;
   const archiva = datos.archivado === true && concepto.archivado === false;
+  // Cambiar el mes de inicio rehace el calendario de cuotas; con pagos hechos eso alteraría el historial.
+  const cambiaInicio = datos.mesInicio !== undefined && datos.mesInicio !== concepto.mesInicio;
+  if (cambiaInicio && (await CuotaGastoFijo.count({ where: { conceptoId: concepto.id, estado: 'pagado' } })) > 0) {
+    throw new ErrorValidacion('No se puede cambiar el mes de inicio de un concepto con cuotas pagadas');
+  }
 
   await sequelize.transaction(async (transaction) => {
     await concepto.update(datos, { transaction });
@@ -304,6 +320,12 @@ async function editarConcepto(usuarioId, gastoFijoId, conceptoId, datos) {
       return;
     }
     if (concepto.archivado) return;
+
+    if (cambiaInicio) {
+      await CuotaGastoFijo.destroy({ where: { conceptoId: concepto.id, estado: 'pendiente' }, transaction });
+      await generarCuotasDeConcepto(concepto, { transaction });
+      return;
+    }
 
     if (cambiaMonto || cambiaCuotas) {
       if (concepto.cuotas === null || concepto.cuotas === undefined) {
@@ -320,7 +342,8 @@ async function editarConcepto(usuarioId, gastoFijoId, conceptoId, datos) {
           }
         );
       } else {
-        // Finito: las cuotas pagadas o vencidas son historial y no se recalculan.
+        // Finito: las cuotas pagadas o vencidas son historial y no se recalculan. Lo que falta del total
+        // nuevo se reparte en las cuotas futuras, así la suma de todas las cuotas siempre da el total (M-04).
         await CuotaGastoFijo.destroy({
           where: {
             conceptoId: concepto.id,
@@ -329,14 +352,25 @@ async function editarConcepto(usuarioId, gastoFijoId, conceptoId, datos) {
           },
           transaction,
         });
-        const filas = cuotasFinanciadas({
+        const historial = await CuotaGastoFijo.findAll({ where: { conceptoId: concepto.id }, transaction });
+        const mesesHistorial = new Set(historial.map((c) => c.mes));
+        const futuras = cuotasFinanciadas({
           montoTotal: concepto.montoTotal,
           cuotas: concepto.cuotas,
           mesInicio: concepto.mesInicio,
           diaVencimiento: gasto.diaVencimiento,
-        });
-        for (const f of filas) {
-          if (f.fechaVencimiento <= hoy) continue;
+        }).filter((f) => f.fechaVencimiento > hoy && !mesesHistorial.has(f.mes));
+        const restante = aCentavos(concepto.montoTotal) - aCentavos(sumar(historial.map((c) => c.monto)));
+        if (restante < 0n) throw new ErrorValidacion('El total no puede ser menor que lo ya pagado o vencido');
+        if (restante === 0n && futuras.length > 0) {
+          throw new ErrorValidacion('Con ese total el plan ya está cubierto: reducí también la cantidad de cuotas');
+        }
+        if (restante > 0n && futuras.length === 0) {
+          throw new ErrorValidacion('No quedan cuotas futuras para repartir el nuevo total: sumá cuotas');
+        }
+        const montos = restante > 0n ? dividirEnPartes(deCentavos(restante), futuras.length) : [];
+        for (const [i, f] of futuras.entries()) {
+          if (!montos[i]) continue;
           await CuotaGastoFijo.findOrCreate({
             where: { conceptoId: concepto.id, mes: f.mes },
             defaults: {
@@ -344,7 +378,7 @@ async function editarConcepto(usuarioId, gastoFijoId, conceptoId, datos) {
               conceptoId: concepto.id,
               usuarioId: gasto.usuarioId,
               mes: f.mes,
-              monto: f.monto,
+              monto: montos[i],
               fechaVencimiento: f.fechaVencimiento,
               estado: 'pendiente',
             },
@@ -388,10 +422,16 @@ async function asegurarCuotas(usuarioId, { hasta, mesesAtras } = {}) {
       where: { archivado: false },
     }],
   });
+  if (!gastos.length) return;
+  // Una sola lectura de los meses ya generados de todos los conceptos (M-02).
+  const conceptoIds = gastos.flatMap((g) => g.conceptos.map((c) => c.id));
+  const generadas = await CuotaGastoFijo.findAll({ where: { conceptoId: conceptoIds }, attributes: ['conceptoId', 'mes'] });
+  const mesesPorConcepto = new Map(conceptoIds.map((id) => [id, new Set()]));
+  for (const c of generadas) mesesPorConcepto.get(c.conceptoId).add(c.mes);
   await sequelize.transaction(async (transaction) => {
     for (const gasto of gastos) {
       for (const concepto of gasto.conceptos) {
-        await generarCuotasDeConcepto(concepto, { transaction, hasta, mesesAtras });
+        await generarCuotasDeConcepto(concepto, { transaction, hasta, mesesAtras, gasto, existentes: mesesPorConcepto.get(concepto.id) });
       }
     }
   });
@@ -438,12 +478,21 @@ async function recordatorios(usuarioId) {
     order: [['fechaVencimiento', 'ASC'], ['id', 'ASC']],
   });
   const avisos = [];
+  // Los avisos ya registrados se leen de una vez; solo se crean los que faltan.
+  const yaAvisadas = cuotas.length
+    ? new Set((await Notificacion.findAll({ where: { cuotaGastoFijoId: cuotas.map((c) => c.id) }, attributes: ['cuotaGastoFijoId', 'alerta'] }))
+      .map((n) => `${n.cuotaGastoFijoId}|${n.alerta}`))
+    : new Set();
   for (const cuota of cuotas) {
     const dto = dtoCuota(cuota);
     if (dto.situacion !== 'vencido' && dto.situacion !== 'proximo') continue;
+    if (yaAvisadas.has(`${cuota.id}|${dto.situacion}`)) {
+      avisos.push(dto);
+      continue;
+    }
     const mensaje =
       dto.situacion === 'vencido'
-        ? `Venció el pago de ${dto.gastoNombre} - ${dto.conceptoNombre} ($${dto.monto})`
+        ? `Venció el pago de ${dto.gastoNombre} - ${dto.conceptoNombre} (${formatearMonto(dto.monto, cuota.GastoFijo?.moneda)})`
         : `Tenemos que pagar ${dto.gastoNombre} - ${dto.conceptoNombre} antes del ${dto.fechaVencimiento}`;
     await registrarAlertaVencimiento(usuarioId, cuota.id, dto.situacion, mensaje);
     avisos.push(dto);
@@ -505,6 +554,13 @@ async function pagarCuota(usuarioId, gastoFijoId, cuotaId, { fecha } = {}) {
   descripcion = descripcion.slice(0, 255);
 
   const resultado = await sequelize.transaction(async (transaction) => {
+    // Marca la cuota como pagada solo si sigue pendiente (M-03): de dos pagos simultáneos, el segundo no
+    // encuentra la fila pendiente y se rechaza, así nunca se crean dos movimientos por la misma cuota.
+    const [marcadas] = await CuotaGastoFijo.update(
+      { estado: 'pagado', pagadoEn: new Date() },
+      { where: { id: cuota.id, estado: 'pendiente' }, transaction }
+    );
+    if (marcadas === 0) throw new ErrorValidacion('La cuota ya está pagada');
     const movimiento = await Movimiento.create(
       {
         usuarioId,

@@ -58,7 +58,6 @@ function cerrar() {
   boton.value?.focus()
 }
 
-onMounted(cargar)
 </script>
 
 <template>

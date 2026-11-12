@@ -1,23 +1,26 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import { useSesion } from '../stores/sesion.js'
 import LoginView from '../views/LoginView.vue'
-import RegistroView from '../views/RegistroView.vue'
 import MovimientosView from '../views/MovimientosView.vue'
-import PresupuestosView from '../views/PresupuestosView.vue'
-import GastosFijosView from '../views/GastosFijosView.vue'
-import MetasView from '../views/MetasView.vue'
-import GruposView from '../views/GruposView.vue'
-import GrupoDetalleView from '../views/GrupoDetalleView.vue'
-import AceptarInvitacionView from '../views/AceptarInvitacionView.vue'
-import EstadisticasView from '../views/EstadisticasView.vue'
-import GastoFijoDetalleView from '../views/GastoFijoDetalleView.vue'
-import CategoriasView from '../views/CategoriasView.vue'
-import PerfilView from '../views/PerfilView.vue'
-import RestablecerView from '../views/RestablecerView.vue'
-import CompletarFechaView from '../views/CompletarFechaView.vue'
-import DeudasView from '../views/DeudasView.vue'
-import ControlParentalView from '../views/ControlParentalView.vue'
 import LayoutPrincipal from '../components/LayoutPrincipal.vue'
+
+// Carga diferida (P-07): el login, el layout y Movimientos (la pantalla de entrada) van en el paquete
+// inicial; cada módulo restante se descarga recién cuando se abre. Estadísticas, por ejemplo, trae Chart.js.
+const RegistroView = () => import('../views/RegistroView.vue')
+const PresupuestosView = () => import('../views/PresupuestosView.vue')
+const GastosFijosView = () => import('../views/GastosFijosView.vue')
+const MetasView = () => import('../views/MetasView.vue')
+const GruposView = () => import('../views/GruposView.vue')
+const GrupoDetalleView = () => import('../views/GrupoDetalleView.vue')
+const AceptarInvitacionView = () => import('../views/AceptarInvitacionView.vue')
+const EstadisticasView = () => import('../views/EstadisticasView.vue')
+const GastoFijoDetalleView = () => import('../views/GastoFijoDetalleView.vue')
+const CategoriasView = () => import('../views/CategoriasView.vue')
+const PerfilView = () => import('../views/PerfilView.vue')
+const RestablecerView = () => import('../views/RestablecerView.vue')
+const CompletarFechaView = () => import('../views/CompletarFechaView.vue')
+const DeudasView = () => import('../views/DeudasView.vue')
+const ControlParentalView = () => import('../views/ControlParentalView.vue')
 
 export const rutas = [
   { path: '/login', name: 'login', component: LoginView },

@@ -189,8 +189,11 @@ test('editar un concepto recalcula solo las cuotas futuras y conserva la pagada'
   expect(despues.body.cuotas).toHaveLength(3);
   const porMes = Object.fromEntries(despues.body.cuotas.map((c) => [c.mes, c]));
   expect(porMes[mesActual]).toMatchObject({ monto: '100.00', estado: 'pagado' });
-  expect(porMes[mesSiguiente]).toMatchObject({ monto: '200.00', estado: 'pendiente' });
-  expect(porMes[mesSubsiguiente]).toMatchObject({ monto: '200.00', estado: 'pendiente' });
+  // M-04: el total nuevo (600) menos lo pagado (100) se reparte en las dos cuotas que faltan.
+  expect(porMes[mesSiguiente]).toMatchObject({ monto: '250.00', estado: 'pendiente' });
+  expect(porMes[mesSubsiguiente]).toMatchObject({ monto: '250.00', estado: 'pendiente' });
+  const suma = despues.body.cuotas.reduce((acc, c) => acc + Math.round(Number(c.monto) * 100), 0);
+  expect(suma).toBe(60000);
 
   const archivar = await agentA
     .patch(`/api/gastos-fijos/${gastoId}/conceptos/${conceptoId}`)
@@ -200,6 +203,38 @@ test('editar un concepto recalcula solo las cuotas futuras y conserva la pagada'
   expect(sinConcepto.body.conceptos).toHaveLength(0);
   const venc = await agentA.get(`/api/gastos-fijos/vencimientos?mes=${mesActual}`);
   expect(venc.body.some((c) => c.gastoFijoId === gastoId)).toBe(false);
+});
+
+// M-03: dos pagos simultáneos de la misma cuota generan un solo movimiento.
+test('pagar dos veces a la vez la misma cuota crea un solo movimiento', async () => {
+  const res = await crear(agentA, {
+    nombre: 'Concurrente',
+    diaVencimiento: diaHoy,
+    conceptos: [{ nombre: 'Cuota', montoTotal: '90.00', cuotas: 3, mesInicio: mesActual }],
+  });
+  const gastoId = res.body.id;
+  const detalle = await agentA.get(`/api/gastos-fijos/${gastoId}?mes=${mesActual}`);
+  const cuota = detalle.body.cuotas.find((c) => c.numeroCuota === 1);
+  const url = `/api/gastos-fijos/${gastoId}/cuotas/${cuota.id}/pagar`;
+  const [r1, r2] = await Promise.all([agentA.post(url).send({ fecha: hoy }), agentA.post(url).send({ fecha: hoy })]);
+  expect([r1.status, r2.status].sort()).toEqual([200, 400]);
+  expect(await Movimiento.count({ where: { gastoFijoId: gastoId } })).toBe(1);
+});
+
+// M-04: cambiar el mes de inicio rehace el calendario si no hay pagos; con pagos, se rechaza.
+test('cambiar el mes de inicio rehace las cuotas, salvo que haya cuotas pagadas', async () => {
+  const res = await crear(agentA, {
+    nombre: 'Reprogramable',
+    diaVencimiento: 28,
+    conceptos: [{ nombre: 'Plan', montoTotal: '300.00', cuotas: 3, mesInicio: mesSiguiente }],
+  });
+  const gastoId = res.body.id;
+  const conceptoId = res.body.conceptos[0].id;
+  const movido = await agentA.patch(`/api/gastos-fijos/${gastoId}/conceptos/${conceptoId}`).send({ mesInicio: mesSubsiguiente });
+  expect(movido.status).toBe(200);
+  const cuotas = await CuotaGastoFijo.findAll({ where: { conceptoId } });
+  expect(cuotas.map((c) => c.mes).sort()[0]).toBe(mesSubsiguiente);
+  expect(cuotas.some((c) => c.mes === mesSiguiente)).toBe(false);
 });
 
 test('eliminar borra si no hay pagos y archiva si hay historial', async () => {

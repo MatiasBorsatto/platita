@@ -200,3 +200,10 @@ test('editar el reparto no borra los aportes reales y valida montos', async () =
     .send({});
   expect(sinMonto.status).toBe(400);
 });
+
+// B-02: el gasto es de 360 y ya hay 300 aportados: 60 entra justo, un centavo más no.
+test('los aportes no pueden superar el monto del gasto', async () => {
+  const extra = await agentA.post(`/api/grupos/${grupoId}/gastos/${gastoId}/aportes`).send({ monto: '60.01', fecha: hoy });
+  expect(extra.status).toBe(400);
+  expect(extra.body.error).toMatch(/superar el monto/);
+});

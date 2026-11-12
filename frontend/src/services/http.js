@@ -6,6 +6,13 @@ const SIN_REFRESCO = ['/auth/refresh', '/auth/login']
 // Las acciones que cambian datos avisan con una alerta; los errores de login quedan en el formulario.
 const MENSAJE_EXITO = { POST: 'Guardado', PUT: 'Cambios guardados', PATCH: 'Cambios guardados', DELETE: 'Eliminado' }
 
+// Qué hacer cuando la sesión venció (falló el refresco) o falta la fecha de nacimiento.
+// Lo configura main.js con el router; así este módulo no depende de la navegación.
+let manejadores = {}
+export function configurarSesion(nuevos) {
+  manejadores = nuevos ?? {}
+}
+
 async function pedir(metodo, url, cuerpo, reintento = false) {
   red.pendientes++
   const esAuth = url.startsWith('/auth/')
@@ -14,7 +21,8 @@ async function pedir(metodo, url, cuerpo, reintento = false) {
     if (metodo !== 'GET' && !esAuth) avisar(MENSAJE_EXITO[metodo] ?? 'Listo')
     return datos
   } catch (error) {
-    if (!esAuth && metodo !== 'GET') avisar(error.mensaje ?? 'No pudimos conectarnos. Revisá tu conexión.', 'error')
+    // Con la sesión vencida no se muestra el error: la app lleva al login con su propio aviso.
+    if (!esAuth && metodo !== 'GET' && error.status !== 401) avisar(error.mensaje ?? 'No pudimos conectarnos. Revisá tu conexión.', 'error')
     throw error
   } finally {
     red.pendientes--
@@ -47,6 +55,8 @@ async function pedirSinContar(metodo, url, cuerpo, reintento = false) {
     }
   }
   if (!respuesta.ok) {
+    if (respuesta.status === 401 && !url.startsWith('/auth/')) manejadores.alExpirar?.()
+    if (respuesta.status === 403 && datos?.codigo === 'FECHA_NACIMIENTO_PENDIENTE') manejadores.alFaltarFecha?.()
     const error = new Error(datos?.error || datos?.mensaje || 'Ocurrió un error inesperado')
     error.status = respuesta.status
     error.codigo = datos?.codigo

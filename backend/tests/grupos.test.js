@@ -149,6 +149,21 @@ describe('grupos', () => {
     expect((await agentA.post(`/api/grupos/${g.id}/salir`)).status).toBe(204);
   });
 
+  // B-03: con un saldo distinto de cero nadie sale ni es quitado; saldado, sí.
+  test('un miembro con saldo pendiente no puede salir ni ser quitado hasta saldar', async () => {
+    const g = await crear(agentA, 'Con deuda');
+    await agentB.post('/api/grupos/unirse').send({ codigo: g.codigo });
+    const uA = await Usuario.findOne({ where: { email: correos[0] } });
+    const uB = await Usuario.findOne({ where: { email: correos[1] } });
+    const gasto = await agentA.post(`/api/grupos/${g.id}/gastos`).send({ pagadorId: uA.id, monto: '100.00', fecha: '2026-10-01', descripcion: 'Cena' });
+    expect(gasto.status).toBe(201);
+    expect((await agentB.post(`/api/grupos/${g.id}/salir`)).status).toBe(409);
+    expect((await agentA.delete(`/api/grupos/${g.id}/miembros/${uB.id}`)).status).toBe(409);
+    const pago = await agentB.post(`/api/grupos/${g.id}/pagos`).send({ deudorId: uB.id, acreedorId: uA.id, monto: '50.00', fecha: '2026-10-02' });
+    expect(pago.status).toBe(201);
+    expect((await agentB.post(`/api/grupos/${g.id}/salir`)).status).toBe(204);
+  });
+
   test('no miembro no puede regenerar ni salir (404)', async () => {
     const g = await crear(agentA, 'Ajeno');
     expect((await agentB.post(`/api/grupos/${g.id}/codigo/regenerar`)).status).toBe(404);

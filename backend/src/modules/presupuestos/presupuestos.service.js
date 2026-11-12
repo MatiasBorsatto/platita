@@ -80,10 +80,26 @@ async function calcularEstadosPresupuestos(usuarioId, mes) {
   });
 }
 
+// Solo lectura (CQS, M-01): consultar el estado nunca escribe. Los avisos se registran en revisarAlertas,
+// que se llama después de cada cambio en los gastos.
 async function estadoPresupuestos(usuarioId, mes) {
-  const estados = await calcularEstadosPresupuestos(usuarioId, mes);
-  await registrarAlertas(usuarioId, estados);
-  return estados;
+  return calcularEstadosPresupuestos(usuarioId, mes);
+}
+
+// Después de crear o editar un gasto (personal, compartido o pago de cuota) o de definir un presupuesto,
+// revisa los presupuestos de los meses afectados y registra los avisos del 80 % y del 100 %.
+// Un aviso ya registrado no se duplica. Nunca hace fallar la operación que lo disparó.
+async function revisarAlertas(usuarioIds, fechas) {
+  const meses = [...new Set(fechas.filter(Boolean).map((f) => String(f).slice(0, 7)))];
+  for (const usuarioId of new Set(usuarioIds.filter(Boolean))) {
+    for (const mes of meses) {
+      try {
+        await registrarAlertas(usuarioId, await calcularEstadosPresupuestos(usuarioId, mes));
+      } catch (err) {
+        console.error('No se pudieron revisar las alertas de presupuesto:', err.name);
+      }
+    }
+  }
 }
 
 // Una falla al registrar alertas nunca debe romper la consulta de presupuestos.
@@ -104,4 +120,4 @@ async function registrarAlertas(usuarioId, estados) {
   }
 }
 
-module.exports = { calcularEstadosPresupuestos, upsertPresupuesto, listarPresupuestos, eliminarPresupuesto, estadoPresupuestos };
+module.exports = { calcularEstadosPresupuestos, upsertPresupuesto, listarPresupuestos, eliminarPresupuesto, estadoPresupuestos, revisarAlertas };

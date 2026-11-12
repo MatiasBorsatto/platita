@@ -101,14 +101,26 @@ async function aportesDelRango(usuarioId, desde, hasta) {
 }
 
 async function resumenMensual(usuarioId, mes) {
-  const [lineas, presupuestos, aportesMetas] = await Promise.all([
+  const [lineas, presupuestos, aportes] = await Promise.all([
     lineasDelMes(usuarioId, mes),
     calcularEstadosPresupuestos(usuarioId, mes),
-    aportesDelMes(usuarioId, mes),
+    aportesDelRango(usuarioId, mes, mes),
   ]);
-  // Los totales de primer nivel son en pesos. Cada moneda también aparece por separado, sin convertir.
+  // Los totales de primer nivel son en pesos. Cada moneda también aparece por separado, sin convertir,
+  // con sus propios aportes a metas (B-09): igual que en la serie histórica.
   const pesos = lineas.filter((l) => l.moneda === 'ARS');
-  return { mes, ...calcularResumen(pesos, presupuestos), aportesMetas, porMoneda: resumenPorMoneda(lineas) };
+  const aportesEn = (moneda) => aportes.get(`${mes}|${moneda}`) ?? '0.00';
+  const porMoneda = resumenPorMoneda(lineas);
+  for (const [clave] of aportes) {
+    const moneda = clave.split('|')[1];
+    if (!porMoneda.some((m) => m.moneda === moneda)) porMoneda.push({ moneda, ...calcularResumen([], []) });
+  }
+  return {
+    mes,
+    ...calcularResumen(pesos, presupuestos),
+    aportesMetas: aportesEn('ARS'),
+    porMoneda: porMoneda.map((m) => ({ ...m, aportesMetas: aportesEn(m.moneda) })),
+  };
 }
 
 module.exports = { resumenMensual, lineasDelMes, aportesDelMes, lineasDelRango, aportesDelRango, resumenPorMoneda };

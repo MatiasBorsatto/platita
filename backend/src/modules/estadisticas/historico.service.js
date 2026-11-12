@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Movimiento, MiembroGrupo, ParticipacionGasto, PagoEntreMiembros, AporteGasto } = require('../../db/models');
+const { Movimiento, MiembroGrupo, ParticipacionGasto, PagoEntreMiembros, AporteGasto, Usuario } = require('../../db/models');
 const { aCentavos, deCentavos } = require('../../utils/dinero');
 const { ErrorProhibido } = require('../../utils/errores');
 const { rangoDelMes } = require('../movimientos/movimientos.service');
@@ -44,14 +44,15 @@ function sumarPor(filas, claveDe) {
 }
 
 // Saldo acumulado de cada miembro al cierre de cada mes del rango.
-async function saldosHistoricos(usuarioId, grupoId, desde, hasta) {
+// Saldo de cada miembro al cierre de cada mes, en una sola moneda (M-07): nunca se mezclan pesos con dólares.
+async function saldosHistoricos(usuarioId, grupoId, desde, hasta, moneda = 'ARS') {
   if (!(await MiembroGrupo.findOne({ where: { grupoId, usuarioId } }))) {
     throw new ErrorProhibido('No pertenecés a este grupo');
   }
   const meses = mesesEnRango(desde, hasta);
   const miembros = await MiembroGrupo.findAll({ where: { grupoId }, order: [['createdAt', 'ASC'], ['id', 'ASC']] });
   const movs = await Movimiento.findAll({
-    where: { grupoId, alcance: 'compartido', tipo: 'gasto' },
+    where: { grupoId, alcance: 'compartido', tipo: 'gasto', moneda },
     attributes: ['id', 'monto', 'fecha'],
   });
   const participaciones = movs.length
@@ -61,7 +62,9 @@ async function saldosHistoricos(usuarioId, grupoId, desde, hasta) {
     ? await AporteGasto.findAll({ where: { movimientoId: movs.map((m) => m.id) } })
     : [];
   const fechaDe = new Map(movs.map((m) => [m.id, m.fecha]));
-  const pagos = await PagoEntreMiembros.findAll({ where: { grupoId } });
+  const pagos = await PagoEntreMiembros.findAll({ where: { grupoId, moneda } });
+  const usuarios = await Usuario.findAll({ where: { id: miembros.map((m) => m.usuarioId) }, attributes: ['id', 'nombre'] });
+  const nombres = new Map(usuarios.map((u) => [u.id, u.nombre]));
 
   return meses.map((mes) => {
     const fin = rangoDelMes(mes)[1];
@@ -76,7 +79,7 @@ async function saldosHistoricos(usuarioId, grupoId, desde, hasta) {
       pagosRecibidos: sumarPor(pagosMes, (p) => p.acreedorId),
     });
     const ids = [...new Set([...miembros.map((m) => m.usuarioId), ...saldos.keys()])];
-    return { mes, saldos: ids.map((id) => ({ usuarioId: id, saldo: saldos.get(id) ?? '0.00' })) };
+    return { mes, moneda, saldos: ids.map((id) => ({ usuarioId: id, nombre: nombres.get(id) ?? null, saldo: saldos.get(id) ?? '0.00' })) };
   });
 }
 

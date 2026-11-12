@@ -1,6 +1,6 @@
 <script setup>
 import { confirmar } from '../services/dialogo.js'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSesion } from '../stores/sesion.js'
 import SaldosGrupo from '../components/SaldosGrupo.vue'
@@ -10,7 +10,7 @@ import ListaGastosCompartidos from '../components/ListaGastosCompartidos.vue'
 import {
   obtenerGrupo, listarSaldos, listarPagos, registrarPago, crearGastoCompartido,
   listarGastosCompartidos, editarGastoCompartido, eliminarGastoCompartido,
-  registrarAporte, eliminarAporte,
+  registrarAporte, eliminarAporte, saldosHistoricos,
   regenerarCodigo, quitarMiembro, cambiarRol, salirDeGrupo, invitar
 } from '../services/grupos.js'
 import { listarCategorias } from '../services/movimientos.js'
@@ -31,14 +31,28 @@ const error = ref('')
 const aviso = ref('')
 const mostrarPago = ref(false)
 const emailInvitado = ref('')
+// Evolución de los saldos de los últimos 6 meses. El gráfico (Chart.js) se descarga solo si hay algo para mostrar.
+const GraficoSaldosGrupo = defineAsyncComponent(() => import('../charts/GraficoSaldosGrupo.vue'))
+const evolucion = ref([])
+const hayMovimientoDeSaldos = computed(() => evolucion.value.some((m) => m.saldos.some((s) => s.saldo !== '0.00')))
 
 const usuarioId = computed(() => sesion.usuario?.id ?? null)
 const esAdmin = computed(() => grupo.value?.rol === 'admin')
 
+const aMes = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+
 async function cargarSaldosYPagos() {
-  const [s, p] = await Promise.all([listarSaldos(id), listarPagos(id)])
+  const hoy = new Date()
+  const rango = { desde: aMes(new Date(hoy.getFullYear(), hoy.getMonth() - 5, 1)), hasta: aMes(hoy) }
+  const [s, p, e] = await Promise.all([
+    listarSaldos(id),
+    listarPagos(id),
+    // El gráfico es complementario: si falla, el resto del detalle se muestra igual.
+    saldosHistoricos(id, rango).catch(() => [])
+  ])
   saldos.value = s
   pagos.value = p
+  evolucion.value = e
 }
 
 async function cargarGastos() {
@@ -245,6 +259,10 @@ onMounted(cargar)
 
       <div class="bloque">
         <SaldosGrupo :saldos="saldos" :usuario-id="usuarioId" @registrar-pago="mostrarPago = !mostrarPago" />
+      </div>
+
+      <div v-if="hayMovimientoDeSaldos" class="bloque panel" data-evolucion-saldos>
+        <GraficoSaldosGrupo :datos="evolucion" />
       </div>
 
       <div class="bloque">

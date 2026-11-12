@@ -1,4 +1,4 @@
-const { Usuario, VinculoTutor, PermisoMenor } = require('../../db/models');
+const { Usuario, VinculoTutor, PermisoMenor, MiembroGrupo } = require('../../db/models');
 const { ErrorProhibido, ErrorValidacion } = require('../../utils/errores');
 const { hoyBA } = require('../../utils/fechas');
 const { clasificar } = require('./clasificacion');
@@ -21,7 +21,12 @@ async function puede(usuarioId, permiso, { grupoId = null } = {}) {
   if (clase === 'sin_fecha') return !FAMILIARES.includes(permiso);
   if (TARJETAS.includes(permiso)) return false;
 
-  const vinculos = await VinculoTutor.findAll({ where: { menorId: usuarioId }, attributes: ['id', 'grupoId'] });
+  const todos = await VinculoTutor.findAll({ where: { menorId: usuarioId }, attributes: ['id', 'grupoId'] });
+  // Solo cuentan los vínculos de grupos en los que el menor sigue siendo miembro.
+  const grupos = todos.length
+    ? new Set((await MiembroGrupo.findAll({ where: { usuarioId, grupoId: todos.map((v) => v.grupoId) }, attributes: ['grupoId'] })).map((m) => m.grupoId))
+    : new Set();
+  const vinculos = todos.filter((v) => grupos.has(v.grupoId));
   if (vinculos.length === 0) return !FAMILIARES.includes(permiso);
   const aplicables = grupoId ? vinculos.filter((v) => v.grupoId === grupoId) : vinculos;
   if (aplicables.length === 0) return false;

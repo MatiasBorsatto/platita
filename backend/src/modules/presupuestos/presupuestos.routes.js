@@ -39,7 +39,10 @@ router.put('/', async (req, res) => {
     if (typeof b.moneda !== 'string' || !/^[A-Z]{3}$/.test(b.moneda)) throw new ErrorValidacion('La moneda debe ser un código de 3 letras (por ejemplo ARS)');
     datos.moneda = b.moneda;
   }
-  res.json(await service.upsertPresupuesto(req.usuario.id, datos));
+  const presupuesto = await service.upsertPresupuesto(req.usuario.id, datos);
+  // Un tope nuevo puede quedar ya superado por los gastos del mes.
+  await service.revisarAlertas([req.usuario.id], [`${datos.mes}-01`]);
+  res.json(presupuesto);
 });
 
 router.delete('/:id', async (req, res) => {
