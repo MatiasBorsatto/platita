@@ -1,5 +1,20 @@
 import { describe, it, expect } from 'vitest'
-import { errorDelFormulario, payloadDelFormulario } from '../src/utils/gastoFijo.js'
+import { errorDelFormulario, payloadDelFormulario, describirTarjeta } from '../src/utils/gastoFijo.js'
+
+describe('descripción de la tarjeta de un gasto fijo', () => {
+  it('muestra tipo, solo los últimos cuatro dígitos, banco y titular', () => {
+    const g = { tipoPago: 'tarjeta_debito', ultimosCuatro: '1234', banco: 'Banco Demo', titular: 'Carlos Pérez' }
+    expect(describirTarjeta(g)).toBe('Tarjeta de débito ••••1234 · Banco Demo · Carlos Pérez')
+  })
+
+  it('a un menor (sin datos bancarios) solo le dice que es con tarjeta', () => {
+    expect(describirTarjeta({ tipoPago: 'tarjeta_credito' })).toBe('Tarjeta de crédito')
+  })
+
+  it('un gasto simple no muestra nada', () => {
+    expect(describirTarjeta({ tipoPago: 'simple' })).toBeNull()
+  })
+})
 
 const base = {
   nombre: 'Internet', diaVencimiento: '10', categoriaId: '', tipoPago: 'simple', moneda: 'ARS',

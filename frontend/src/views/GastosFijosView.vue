@@ -1,5 +1,5 @@
 <script setup>
-import { TIPOS_PAGO, MONEDAS, esTarjeta, errorDelFormulario, payloadDelFormulario } from '../utils/gastoFijo.js'
+import { TIPOS_PAGO, MONEDAS, esTarjeta, describirTarjeta, errorDelFormulario, payloadDelFormulario } from '../utils/gastoFijo.js'
 import { listarGrupos } from '../services/grupos.js'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -131,7 +131,7 @@ onMounted(async () => {
         <h1>Gastos fijos</h1>
         <p class="suave">Tus servicios y cuotas de todos los meses.</p>
       </div>
-      <button type="button" class="primario" data-agregar data-tour="agregar-gasto-fijo" @click@click="abrirFormulario">Agregar gasto fijo</button>
+      <button type="button" class="primario" data-agregar data-tour="agregar-gasto-fijo" @click="abrirFormulario">Agregar gasto fijo</button>
     </div>
 
     <div v-if="error" class="error-form" role="alert">{{ error }}</div>
@@ -189,7 +189,7 @@ onMounted(async () => {
             <option value="grupo">Del grupo familiar</option>
           </select>
         </label>
-        <label v-if="ambito === grupo">Grupo
+        <label v-if="ambito === 'grupo'">Grupo
           <select v-model="grupoId" name="grupoId">
             <option value="">Elegí un grupo</option>
             <option v-for="g in grupos" :key="g.id" :value="g.id">{{ g.nombre }}</option>
@@ -215,6 +215,7 @@ onMounted(async () => {
             <div class="titulo">
               <h2><RouterLink :to="`/gastos-fijos/${g.id}`">{{ g.nombre }}</RouterLink></h2>
               <p class="suave">Vence el día {{ g.diaVencimiento }} · {{ nombreCategoria(g.categoriaId) }}</p>
+              <p v-if="describirTarjeta(g)" class="suave tarjeta" data-tarjeta>{{ describirTarjeta(g) }}</p>
             </div>
             <div class="monto-mes">
               <strong>{{ formatearMontoEn(g.resumen?.totalMes ?? '0.00', g.moneda) }}</strong>

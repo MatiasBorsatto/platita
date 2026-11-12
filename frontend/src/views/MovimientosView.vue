@@ -28,6 +28,8 @@ const cargandoDatos = ref(false)
 const error = ref('')
 const aviso = ref('')
 const editando = ref(null)
+// Cambia después de cada alta exitosa: el formulario se vuelve a montar vacío para cargar otro.
+const versionFormulario = ref(0)
 const filtros = reactive({ mes: '', tipo: '', categoriaId: '' })
 
 const dinero = ref(null)
@@ -103,6 +105,7 @@ async function guardar(datos) {
     if (editando.value) await editarMovimiento(editando.value.id, datos)
     else await crearMovimiento(datos)
     editando.value = null
+    versionFormulario.value++
     await cargarMiPlata()
     await cargar()
   } catch (e) {
@@ -115,6 +118,7 @@ async function guardarCompartido({ grupoId, datos }) {
   aviso.value = ''
   try {
     await crearGastoCompartido(grupoId, datos)
+    versionFormulario.value++
     await cargarMiPlata()
     await cargar()
   } catch (e) {
@@ -219,7 +223,7 @@ onMounted(async () => {
     <section class="bloque" data-tour="cargar-movimiento">
       <h2>Cargar movimiento</h2>
       <FormularioMovimiento
-        :key="editando?.id ?? 'nuevo'"
+        :key="editando?.id ?? `nuevo-${versionFormulario}`"
         :categorias="categorias"
         :metas="metas"
         :movimiento="editando"

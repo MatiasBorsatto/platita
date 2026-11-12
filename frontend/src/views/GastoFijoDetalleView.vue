@@ -11,6 +11,7 @@ import {
   pagarCuota, deshacerPago
 } from '../services/gastos-fijos.js'
 import { hoyLocal, formatearMonto, aCentavos, deCentavos } from '../utils/formato.js'
+import { describirTarjeta } from '../utils/gastoFijo.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -261,6 +262,7 @@ onMounted(async () => {
         <div>
           <h1>{{ gasto.nombre }}</h1>
           <p class="suave">Vence el día {{ gasto.diaVencimiento }} · {{ nombreCategoria(gasto.categoriaId) }}</p>
+          <p v-if="describirTarjeta(gasto)" class="suave" data-tarjeta>{{ describirTarjeta(gasto) }}</p>
         </div>
         <div class="acciones">
           <button type="button" @click="abrirEdicionGasto">Editar gasto</button>

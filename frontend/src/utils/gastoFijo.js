@@ -8,6 +8,15 @@ export const MONEDAS = ['ARS', 'USD']
 
 export const esTarjeta = (tipo) => tipo === 'tarjeta_credito' || tipo === 'tarjeta_debito'
 
+// Línea que identifica la tarjeta de un gasto fijo. Nunca hay más que los últimos cuatro dígitos;
+// a un menor el backend no le manda datos bancarios, así que solo ve el tipo de pago.
+export function describirTarjeta(g) {
+  if (!esTarjeta(g?.tipoPago)) return null
+  const tipo = TIPOS_PAGO.find((t) => t.valor === g.tipoPago).texto
+  const numero = g.ultimosCuatro ? `${tipo} ••••${g.ultimosCuatro}` : tipo
+  return [numero, g.banco, g.titular].filter(Boolean).join(' · ')
+}
+
 // Devuelve el primer error del formulario, o null si está listo para enviarse.
 export function errorDelFormulario(form) {
   if (!form.nombre.trim()) return 'Ingresá el nombre del gasto fijo.'
