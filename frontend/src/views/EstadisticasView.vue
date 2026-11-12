@@ -25,7 +25,10 @@ const cifrasMes = computed(() => {
   const vacio = { ingresos: '0.00', gastos: '0.00', ahorroNeto: '0.00', aportesMetas: '0.00', gastosPorCategoria: [] }
   if (!resumen.value) return vacio
   const porMoneda = (resumen.value.porMoneda || []).find((m) => m.moneda === moneda.value)
-  return porMoneda ?? vacio
+  // La API informa los aportes a metas en el primer nivel (metas en pesos), no dentro de cada moneda.
+  // Sin este respaldo el valor llegaba indefinido y la tarjeta mostraba "NaN".
+  const aportesMetas = porMoneda?.aportesMetas ?? (moneda.value === 'ARS' ? resumen.value.aportesMetas : null) ?? '0.00'
+  return { ...vacio, ...porMoneda, aportesMetas }
 })
 
 // La serie histórica para la moneda elegida, con el mismo formato que espera el gráfico.

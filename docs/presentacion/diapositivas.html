@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Platita — Presentación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+/* Paleta de la app (frontend/src/styles/tokens.css, modo oscuro). Funciona sin internet: si no carga
+   la fuente Inter, usa la del sistema. */
+:root {
+  --fondo: #0b1020;
+  --superficie: #131a2e;
+  --superficie-2: #18213a;
+  --borde: #26304d;
+  --texto: #e8ecf8;
+  --texto-suave: #98a3bd;
+  --primario: #2dd4a8;
+  --primario-oscuro: #0b7d63;
+  --acento: #a48bff;
+  --acento-2: #a855f7;
+  --error: #ff8a80;
+  --advertencia: #fbbf24;
+  --exito: #6ee7b7;
+  --grad-primario: linear-gradient(135deg, #0b7d63 0%, #14b8a6 55%, #2dd4a8 100%);
+  --grad-acento: linear-gradient(135deg, #6d4aff 0%, #a855f7 100%);
+  --grad-texto: linear-gradient(100deg, #5eead4 0%, #2dd4a8 35%, #a48bff 100%);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--fondo); color: var(--texto); overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+
+/* Fondo vivo: manchas de color que se desplazan despacio y una grilla sutil. */
+.fondo { position: fixed; inset: 0; overflow: hidden; z-index: 0; }
+.mancha { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; will-change: transform; }
+.mancha.a { width: 60vw; height: 60vw; left: -18vw; top: -25vw; background: radial-gradient(circle, rgba(45,212,168,.55), transparent 65%); animation: flotar 22s ease-in-out infinite alternate; }
+.mancha.b { width: 55vw; height: 55vw; right: -20vw; top: -10vw; background: radial-gradient(circle, rgba(164,139,255,.5), transparent 65%); animation: flotar 26s ease-in-out infinite alternate-reverse; }
+.mancha.c { width: 50vw; height: 50vw; left: 25vw; bottom: -35vw; background: radial-gradient(circle, rgba(20,184,166,.35), transparent 65%); animation: flotar 30s ease-in-out infinite alternate; }
+@keyframes flotar { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(6vw, 4vw) scale(1.12); } 100% { transform: translate(-4vw, 6vw) scale(.95); } }
+.grilla { position: absolute; inset: 0; opacity: .5;
+  background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 64px 64px; mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%); }
+
+/* Escenario fijo de 1600x900 que se escala para entrar en cualquier pantalla. */
+.visor { position: fixed; inset: 0; z-index: 1; overflow: hidden; }
+.escenario { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform-origin: center; }
+.slide { position: absolute; inset: 0; padding: 64px 96px 88px; display: none; flex-direction: column; justify-content: center; align-items: flex-start; }
+.slide > * { max-width: 100%; }
+.slide > .rejilla-4, .slide > .modulos, .slide > .capas, .slide > .claves, .slide > .dos, .slide > .comparativas,
+.slide > .extras, .slide > .recorridos, .slide > .metricas, .slide > .ciclo, .slide > .extra { width: 100%; }
+.slide > .dos { flex: none; }
+.slide.activa { display: flex; }
+
+/* Tipografía */
+.kicker { display: inline-flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--primario); }
+.kicker::before { content: ''; width: 34px; height: 3px; border-radius: 3px; background: var(--grad-primario); }
+h1, h2 { margin: 0; font-weight: 900; letter-spacing: -0.035em; line-height: 1.02; }
+h2 { font-size: 64px; margin-top: 18px; }
+.grad { background: var(--grad-texto); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { font-size: 25px; line-height: 1.5; color: var(--texto-suave); max-width: 980px; margin: 18px 0 0; }
+.mono { font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+
+/* Tarjetas */
+.card { position: relative; background: linear-gradient(180deg, rgba(24,33,58,.92), rgba(19,26,46,.92)); border: 1px solid var(--borde);
+  border-radius: 24px; padding: 28px; box-shadow: 0 24px 60px rgba(0,0,0,.35); overflow: hidden; }
+.card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(600px 200px at 0% 0%, rgba(45,212,168,.08), transparent 60%); }
+.card h3 { margin: 16px 0 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
+.card p { margin: 0; font-size: 19px; line-height: 1.5; color: var(--texto-suave); }
+.ico { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: rgba(45,212,168,.12); color: var(--primario); }
+.ico.v { background: rgba(164,139,255,.14); color: var(--acento); }
+.ico.r { background: rgba(255,138,128,.13); color: var(--error); }
+.ico.a { background: rgba(251,191,36,.13); color: var(--advertencia); }
+.ico svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; font-size: 18px; font-weight: 700;
+  background: rgba(45,212,168,.12); color: var(--primario); border: 1px solid rgba(45,212,168,.28); }
+.chip.v { background: rgba(164,139,255,.12); color: var(--acento); border-color: rgba(164,139,255,.3); }
+.chip.r { background: rgba(255,138,128,.1); color: var(--error); border-color: rgba(255,138,128,.3); }
+.fila { display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* Interfaz del presentador */
+.barra { position: fixed; left: 0; top: 0; height: 4px; width: 0; z-index: 5; background: var(--grad-texto); box-shadow: 0 0 16px rgba(45,212,168,.6); transition: width .6s cubic-bezier(.22,1,.36,1); }
+.pie { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; padding: 18px 28px; pointer-events: none; }
+.marca { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; color: var(--texto-suave); }
+.marca svg { width: 26px; height: 26px; }
+.puntos { display: flex; gap: 8px; pointer-events: auto; }
+.puntos button { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 99px; background: rgba(255,255,255,.22); cursor: pointer; transition: width .4s cubic-bezier(.22,1,.36,1), background .3s; }
+.puntos button.on { width: 30px; background: var(--primario); }
+.orador { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--texto-suave); font-weight: 600; }
+.orador b { color: var(--texto); }
+.orador .avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: var(--grad-primario); color: #04201a; }
+.orador .avatar.t { background: var(--grad-acento); color: #fff; }
+.ayuda-teclas { position: fixed; right: 28px; top: 18px; z-index: 5; font-size: 13px; color: rgba(152,163,189,.6); }
+
+/* 1. Portada */
+.portada { justify-content: center; align-items: flex-start; }
+.logo-grande { width: 120px; height: 120px; filter: drop-shadow(0 20px 40px rgba(45,212,168,.35)); }
+.portada h1 { font-size: 168px; margin-top: 24px; }
+.portada .tagline { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; margin: 10px 0 0; color: var(--texto); }
+.portada .tagline span { color: var(--primario); }
+.equipo { display: flex; gap: 18px; margin-top: 56px; }
+.persona { display: flex; align-items: center; gap: 14px; padding: 14px 22px 14px 14px; border-radius: 999px; background: rgba(19,26,46,.8); border: 1px solid var(--borde); }
+.persona .avatar { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 20px; background: var(--grad-primario); color: #04201a; }
+.persona .avatar.t { background: var(--grad-acento); color: #fff; }
+.persona b { display: block; font-size: 21px; }
+.persona small { font-size: 15px; color: var(--texto-suave); }
+.materia { margin-top: 28px; font-size: 19px; color: var(--texto-suave); }
+.moneda-flotante { position: absolute; width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 40px;
+  background: radial-gradient(circle at 30% 30%, #5eead4, #0b7d63); color: #04201a; box-shadow: 0 20px 50px rgba(45,212,168,.35), inset 0 -6px 0 rgba(0,0,0,.18); }
+.moneda-flotante.v { background: radial-gradient(circle at 30% 30%, #c4b5fd, #6d4aff); color: #fff; box-shadow: 0 20px 50px rgba(109,74,255,.35), inset 0 -6px 0 rgba(0,0,0,.18); }
+.vaiven { animation: vaiven 6s ease-in-out infinite; }
+.vaiven.d2 { animation-delay: -2s; animation-duration: 7s; }
+.vaiven.d3 { animation-delay: -4s; animation-duration: 8s; }
+@keyframes vaiven { 0%,100% { translate: 0 0; rotate: -6deg; } 50% { translate: 0 -26px; rotate: 8deg; } }
+.mock-app { position: absolute; right: 70px; top: 150px; width: 560px; }
+.mock-app .card { padding: 24px; }
+.mock-titulo { font-size: 15px; color: var(--texto-suave); font-weight: 600; }
+.mock-monto { font-size: 54px; font-weight: 900; letter-spacing: -0.03em; margin: 6px 0 4px; }
+.mock-sub { display: flex; gap: 22px; font-size: 16px; color: var(--texto-suave); }
+.mock-sub b { color: var(--exito); }
+.mock-sub b.g { color: var(--error); }
+.mock-fila { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-top: 1px solid var(--borde); font-size: 17px; }
+.mock-fila:first-of-type { border-top: 0; }
+.mock-fila .punto { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(45,212,168,.12); color: var(--primario); }
+.mock-fila .punto svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mock-fila .monto { margin-left: auto; font-weight: 800; white-space: nowrap; }
+.mock-fila .monto.neg { color: var(--error); }
+.mock-fila .monto.pos { color: var(--exito); }
+.mock-barra { height: 10px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; margin-top: 10px; }
+.mock-barra i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--primario), var(--advertencia)); }
+
+/* 2. Problema */
+.rejilla-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-top: 48px; }
+.rejilla-4 .card { min-height: 290px; }
+.flotante-error { margin-top: 18px; padding: 12px 14px; border-radius: 12px; background: rgba(255,138,128,.08); border: 1px dashed rgba(255,138,128,.35); font-size: 17px; color: var(--error); }
+.extra { margin-top: 28px; display: flex; align-items: center; gap: 18px; padding: 22px 28px; border-radius: 20px; background: linear-gradient(90deg, rgba(164,139,255,.16), rgba(164,139,255,.03)); border: 1px solid rgba(164,139,255,.3); font-size: 24px; }
+.extra b { color: var(--acento); }
+
+/* 3. Módulos */
+.modulos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 40px; }
+.modulo { display: flex; gap: 16px; align-items: flex-start; padding: 22px; }
+.modulo h3 { margin: 2px 0 6px; font-size: 22px; }
+.modulo p { font-size: 16px; }
+.modulo .ico { flex: none; width: 50px; height: 50px; }
+.cinta { margin-top: 26px; display: flex; align-items: center; gap: 16px; font-size: 21px; color: var(--texto-suave); }
+.cinta .boton-ayuda { flex: none; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 24px; background: var(--grad-primario); color: #04201a; animation: latido 2.2s infinite; }
+@keyframes latido { 0% { box-shadow: 0 0 0 0 rgba(45,212,168,.55); } 70% { box-shadow: 0 0 0 22px rgba(45,212,168,0); } 100% { box-shadow: 0 0 0 0 rgba(45,212,168,0); } }
+
+/* 4. Arquitectura */
+.capas { display: grid; grid-template-columns: 1fr 70px 1fr 70px 1fr; align-items: stretch; margin-top: 50px; }
+.capa .tag { font-size: 14px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--texto-suave); }
+.capa h3 { font-size: 32px; margin: 14px 0 6px; }
+.capa .donde { font-size: 18px; color: var(--primario); font-weight: 700; }
+.capa ul { margin: 18px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.capa li { font-size: 18px; color: var(--texto-suave); display: flex; gap: 10px; }
+.capa li::before { content: ''; flex: none; width: 7px; height: 7px; margin-top: 10px; border-radius: 50%; background: var(--primario); }
+.flujo { position: relative; display: grid; place-items: center; }
+.flujo .linea { position: absolute; left: 6px; right: 6px; top: 50%; height: 3px; border-radius: 3px; background: rgba(45,212,168,.18); overflow: hidden; }
+.flujo .linea::after { content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, var(--primario), transparent); animation: viaje 1.6s linear infinite; }
+@keyframes viaje { to { left: 100%; } }
+.claves { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 30px; }
+.clave { display: flex; gap: 18px; align-items: center; padding: 22px 26px; }
+.clave .ico { flex: none; }
+.clave .grande { font-size: 30px; font-weight: 900; }
+
+/* 5. Menores */
+.dos { display: grid; grid-template-columns: 1.05fr 1fr; gap: 36px; margin-top: 36px; flex: 1; min-height: 0; }
+.reglas { display: grid; gap: 16px; align-content: start; }
+.regla { display: flex; gap: 16px; align-items: flex-start; padding: 20px 22px; }
+.regla .ico { flex: none; }
+.regla h3 { margin: 0 0 4px; font-size: 22px; }
+.regla p { font-size: 17px; }
+.panel-permisos { padding: 26px 28px; }
+.pp-cab { display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid var(--borde); }
+.pp-cab .avatar { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; background: var(--grad-acento); color: #fff; }
+.pp-cab b { font-size: 21px; display: block; }
+.pp-cab small { color: var(--texto-suave); font-size: 15px; }
+.pp-grupo { margin-top: 14px; font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--texto-suave); }
+.permiso { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 0; font-size: 18px; }
+.permiso small { display: block; font-size: 13px; color: var(--error); font-weight: 600; }
+.switch { position: relative; flex: none; width: 52px; height: 30px; border-radius: 99px; background: rgba(255,255,255,.14); transition: background .35s; }
+.switch::after { content: ''; position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3); transition: transform .45s cubic-bezier(.34,1.56,.64,1); }
+.switch.on { background: var(--primario); }
+.switch.on::after { transform: translateX(22px); }
+.switch.lock { background: rgba(255,138,128,.18); }
+.switch.lock::after { background: var(--error); }
+.sello-403 { position: absolute; right: -14px; bottom: -14px; padding: 14px 22px; border-radius: 18px; background: var(--error); color: #2a0b08; font-weight: 900; font-size: 30px; box-shadow: 0 18px 40px rgba(255,138,128,.35); }
+.sello-403 small { display: block; font-size: 13px; font-weight: 800; letter-spacing: .08em; }
+
+/* 6. Tarjetas y multimoneda */
+.chips-tarjetas { flex-wrap: nowrap; }
+.chips-tarjetas .chip { font-size: 15px; padding: 9px 14px; }
+.tarjeta-visual { position: relative; width: 590px; aspect-ratio: 1.586; border-radius: 26px; padding: 30px 34px; color: #fff; overflow: hidden;
+  background: linear-gradient(135deg, #1e1b4b 0%, #6d4aff 55%, #a855f7 100%); box-shadow: 0 30px 70px rgba(109,74,255,.4); }
+.tarjeta-visual::before { content: ''; position: absolute; width: 380px; height: 380px; border-radius: 50%; right: -120px; top: -160px; background: rgba(255,255,255,.12); }
+.tarjeta-visual::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.28) 45%, transparent 60%); transform: translateX(-100%); animation: brillo 4.5s ease-in-out infinite; }
+@keyframes brillo { 0%, 55% { transform: translateX(-100%); } 85%, 100% { transform: translateX(100%); } }
+.tv-top { display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 700; position: relative; }
+.chip-tarjeta { width: 58px; height: 44px; border-radius: 9px; background: linear-gradient(135deg, #fde68a, #d4a017); margin-top: 34px; position: relative; }
+.tv-num { margin-top: 26px; font-size: 38px; letter-spacing: .12em; position: relative; }
+.tv-num .oculto { opacity: .55; }
+.tv-pie { display: flex; justify-content: space-between; margin-top: 22px; font-size: 16px; position: relative; text-transform: uppercase; letter-spacing: .06em; }
+.tv-pie small { display: block; opacity: .7; font-size: 12px; }
+.nunca { margin-top: 26px; display: grid; gap: 12px; }
+.nunca div { display: flex; align-items: center; gap: 14px; font-size: 20px; }
+.nunca .x { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,138,128,.14); color: var(--error); font-weight: 900; }
+.nunca s { color: var(--texto-suave); text-decoration-color: var(--error); text-decoration-thickness: 3px; }
+.monedas { display: grid; gap: 14px; margin-top: 18px; }
+.moneda-fila { display: flex; align-items: center; gap: 18px; padding: 18px 22px; border-radius: 18px; background: rgba(255,255,255,.03); border: 1px solid var(--borde); font-size: 19px; }
+.moneda-fila .badge { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; font-weight: 900; font-size: 18px; }
+.moneda-fila .badge.ars { background: rgba(45,212,168,.14); color: var(--primario); }
+.moneda-fila .badge.usd { background: rgba(164,139,255,.16); color: var(--acento); }
+.moneda-fila .monto { margin-left: auto; font-size: 34px; font-weight: 900; letter-spacing: -0.02em; }
+.sin-conv { margin-top: 16px; font-size: 18px; color: var(--texto-suave); }
+.sin-conv b { color: var(--advertencia); }
+
+/* 7. Velocidad */
+.comparativas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 40px; }
+.comp h3 { margin: 0; font-size: 26px; }
+.comp .desc { font-size: 17px; color: var(--texto-suave); margin: 6px 0 22px; }
+.barra-comp { display: grid; grid-template-columns: 80px 1fr 90px; align-items: center; gap: 16px; margin-top: 16px; font-size: 17px; font-weight: 700; color: var(--texto-suave); }
+.pista { height: 34px; border-radius: 10px; background: rgba(255,255,255,.05); overflow: hidden; }
+.pista i { display: block; height: 100%; width: 0; border-radius: inherit; }
+.pista i.antes { background: linear-gradient(90deg, #7f1d1d, var(--error)); }
+.pista i.ahora { background: var(--grad-primario); box-shadow: 0 0 20px rgba(45,212,168,.5); }
+.barra-comp .valor { font-size: 34px; font-weight: 900; color: var(--texto); text-align: right; }
+.barra-comp .valor.ok { color: var(--primario); }
+.factor { margin-top: 18px; display: inline-flex; align-items: baseline; gap: 10px; font-size: 18px; color: var(--texto-suave); }
+.factor b { font-size: 46px; font-weight: 900; }
+.extras { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 26px; }
+.extras .card { padding: 22px; }
+.extras h3 { margin: 12px 0 4px; font-size: 21px; }
+.extras p { font-size: 16px; }
+
+/* 8. Demo */
+.demo-cab { display: flex; align-items: center; gap: 22px; }
+.en-vivo { display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 99px; background: rgba(255,138,128,.12); color: var(--error); font-weight: 800; font-size: 18px; border: 1px solid rgba(255,138,128,.35); }
+.en-vivo i { width: 12px; height: 12px; border-radius: 50%; background: var(--error); animation: parpadeo 1.2s infinite; }
+@keyframes parpadeo { 50% { opacity: .25; transform: scale(.7); } }
+.recorridos { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 36px; }
+.recorrido .quien { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.recorrido .quien .avatar { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; background: var(--grad-primario); color: #04201a; }
+.recorrido .quien .avatar.t { background: var(--grad-acento); color: #fff; }
+.recorrido .quien b { font-size: 24px; display: block; }
+.recorrido .quien small { color: var(--texto-suave); font-size: 16px; }
+.paso { display: flex; gap: 16px; align-items: center; padding: 13px 0; border-top: 1px solid var(--borde); font-size: 20px; }
+.paso .n { flex: none; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; font-weight: 900; font-size: 17px; background: rgba(45,212,168,.13); color: var(--primario); }
+.t .paso .n { background: rgba(164,139,255,.15); color: var(--acento); }
+.paso small { display: block; font-size: 15px; color: var(--texto-suave); }
+
+/* 9. V&V */
+.metricas { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 20px; margin-top: 40px; }
+.metrica { padding: 26px; }
+.metrica .num { font-size: 84px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+.metrica .num.grad { display: inline-block; }
+.metrica .et { margin-top: 10px; font-size: 19px; font-weight: 700; }
+.metrica .det { margin-top: 6px; font-size: 16px; color: var(--texto-suave); line-height: 1.45; }
+.ciclo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 24px; }
+.fase { display: flex; gap: 16px; align-items: center; padding: 20px 22px; }
+.fase .bola { flex: none; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 20px; }
+.fase.rojo .bola { background: rgba(255,138,128,.16); color: var(--error); }
+.fase.verde .bola { background: rgba(45,212,168,.16); color: var(--primario); }
+.fase.azul .bola { background: rgba(164,139,255,.16); color: var(--acento); }
+.fase h3 { margin: 0 0 4px; font-size: 21px; }
+.fase p { font-size: 16px; }
+
+/* 10. Conclusión */
+.conclusion { justify-content: center; }
+.veredicto { font-size: 104px; margin-top: 18px; }
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 40px; margin-top: 36px; max-width: 1080px; }
+.check { display: flex; gap: 14px; align-items: center; font-size: 23px; }
+.check i { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--primario); color: #04201a; font-style: normal; font-weight: 900; }
+.cita { margin-top: 46px; padding: 26px 32px; border-left: 5px solid var(--primario); border-radius: 0 20px 20px 0; background: linear-gradient(90deg, rgba(45,212,168,.12), transparent); font-size: 32px; font-weight: 700; letter-spacing: -0.015em; max-width: 1080px; }
+.gracias { position: absolute; right: 96px; bottom: 110px; text-align: right; }
+.gracias b { display: block; font-size: 64px; font-weight: 900; letter-spacing: -0.03em; }
+.gracias span { font-size: 22px; color: var(--texto-suave); }
+
+/* Destello circular que acompaña el cambio de diapositiva */
+.destello { position: fixed; z-index: 4; width: 40px; height: 40px; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle, rgba(45,212,168,.55), rgba(164,139,255,.25) 45%, transparent 70%); }
+</style>
+</head>
+<body>
+<div class="fondo" aria-hidden="true">
+  <div class="mancha a"></div><div class="mancha b"></div><div class="mancha c"></div>
+  <div class="grilla"></div>
+</div>
+<div class="barra" id="barra"></div>
+<div class="ayuda-teclas">← → para avanzar · F pantalla completa</div>
+<div class="destello" id="destello"></div>
+
+<main class="visor">
+<div class="escenario" id="escenario">
+
+<!-- 1. PORTADA -->
+<section class="slide portada" data-orador="Matías" aria-label="Portada">
+  <svg class="logo-grande" data-a="pop" viewBox="0 0 64 64" aria-hidden="true">
+    <rect width="64" height="64" rx="16" fill="#0b7d63"/><circle cx="32" cy="32" r="23" fill="#fff"/>
+    <path d="M39.5 24.5c-1.7-2.1-4.3-3.2-7.4-3.2-4.6 0-7.8 2.4-7.8 5.9 0 8.8 15.8 4.8 15.8 13.2 0 3.8-3.4 6-8 6-3.6 0-6.4-1.4-8.3-4" fill="none" stroke="#0b7d63" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M32 16.5v5M32 42.5v5" stroke="#0b7d63" stroke-width="6" stroke-linecap="round"/>
+  </svg>
+  <h1 data-a="up"><span class="grad">Platita</span></h1>
+  <p class="tagline" data-a="up">Tu plata en orden. <span>La de tu familia, también.</span></p>
+  <div class="equipo">
+    <div class="persona" data-a="left"><div class="avatar">MB</div><div><b>Matías Borsatto</b><small>Arquitectura · Casos de prueba · TDD</small></div></div>
+    <div class="persona" data-a="left"><div class="avatar t">TG</div><div><b>Tomás Gudiño Rubiolo</b><small>Automatización · Revisión · CI/CD</small></div></div>
+  </div>
+  <p class="materia" data-a="up">Verificación y Validación de Software · TSDS 3.º año · UPC Sede Las Varillas</p>
+
+  <div class="mock-app" data-a="right">
+    <div class="card">
+      <div class="mock-titulo">Mi plata</div>
+      <div class="mock-monto"><span data-count="482350" data-format="pesos">$ 0</span></div>
+      <div class="mock-sub"><span>Ingresos <b>$ 950.000</b></span><span>Gastos <b class="g">$ 467.650</b></span></div>
+      <div style="margin-top:18px">
+        <div class="mock-fila"><span class="punto"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6"/></svg></span>Supermercado<span class="monto neg">− $ 30.000,00</span></div>
+        <div class="mock-fila"><span class="punto"><svg viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></svg></span>Sueldo<span class="monto pos">+ $ 950.000,00</span></div>
+        <div class="mock-fila"><span class="punto"><svg viewBox="0 0 24 24"><path d="M21 12A9 9 0 1 1 12 3v9h9"/></svg></span><span style="flex:1">Presupuesto Alimentación<div class="mock-barra"><i data-bar="82"></i></div></span><span class="monto" style="color:var(--advertencia)">82 %</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="moneda-flotante vaiven" style="right:600px;top:110px" data-a="pop">$</div>
+  <div class="moneda-flotante v vaiven d2" style="right:40px;top:560px;width:74px;height:74px;font-size:26px" data-a="pop">US$</div>
+  <div class="moneda-flotante vaiven d3" style="right:560px;top:640px;width:60px;height:60px;font-size:26px" data-a="pop">¢</div>
+</section>
+
+<!-- 2. PROBLEMA -->
+<section class="slide" data-orador="Matías" aria-label="El problema">
+  <span class="kicker" data-a="up">El problema</span>
+  <h2 data-a="up">Las planillas no alcanzan <span class="grad">para manejar la plata de una casa.</span></h2>
+  <div class="rejilla-4">
+    <div class="card" data-a="up">
+      <div class="ico a"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+      <h3>No están a mano</h3>
+      <p>Cargar un gasto desde el celular en el momento es incómodo, y lo que no se anota se olvida.</p>
+    </div>
+    <div class="card" data-a="up">
+      <div class="ico r"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/><path d="m16 15 5 5M21 15l-5 5"/></svg></div>
+      <h3>Redondean mal</h3>
+      <p>Trabajan con coma flotante.</p>
+      <div class="flotante-error mono">0,10 + 0,20 =<br/>0,30000000000000004</div>
+    </div>
+    <div class="card" data-a="up">
+      <div class="ico v"><svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg></div>
+      <h3>Mezclan todo</h3>
+      <p>No hay una frontera clara entre mi gasto y el gasto de la casa.</p>
+    </div>
+    <div class="card" data-a="up">
+      <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/><path d="M22 21a7 7 0 0 0-5-6.7"/></svg></div>
+      <h3>¿Quién le debe a quién?</h3>
+      <p>Se calcula a mano, y siempre termina en una discusión.</p>
+    </div>
+  </div>
+  <div class="extra" data-a="left">
+    <div class="ico v"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+    <div>Y en una familia hay algo más: <b>los chicos</b>. Que aprendan a manejar plata, sin acceso a todo.</div>
+  </div>
+</section>
+
+<!-- 3. QUÉ RESUELVE -->
+<section class="slide" data-orador="Tomás" aria-label="Qué resuelve">
+  <span class="kicker" data-a="up">Para qué sirve</span>
+  <h2 data-a="up">Todo en un solo lugar, <span class="grad">exacto al centavo.</span></h2>
+  <div class="modulos">
+    <div class="card modulo" data-a="zoom"><div class="ico"><svg viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></svg></div><div><h3>Movimientos</h3><p>Cada ingreso y gasto. "Mi plata" dice cuánto tenés hoy.</p></div></div>
+    <div class="card modulo" data-a="zoom"><div class="ico a"><svg viewBox="0 0 24 24"><path d="M21 12A9 9 0 1 1 12 3v9h9"/></svg></div><div><h3>Presupuestos</h3><p>Un tope por categoría. Aviso al 80 % y al pasarte.</p></div></div>
+    <div class="card modulo" data-a="zoom"><div class="ico v"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6"/><path d="M9 12h6"/></svg></div><div><h3>Gastos fijos</h3><p>Alquiler, servicios y cuotas. Al pagar, se anotan solos.</p></div></div>
+    <div class="card modulo" data-a="zoom"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18"/><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8"/></svg></div><div><h3>Metas</h3><p>Ahorrar para algo y ver cuánto falta.</p></div></div>
+    <div class="card modulo" data-a="zoom"><div class="ico v"><svg viewBox="0 0 24 24"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/><path d="M22 21a7 7 0 0 0-5-6.7"/></svg></div><div><h3>Grupos</h3><p>Gastos compartidos y quién le debe a quién.</p></div></div>
+    <div class="card modulo" data-a="zoom"><div class="ico r"><svg viewBox="0 0 24 24"><path d="M3 7h18v10H3z"/><path d="M12 7v10"/></svg></div><div><h3>Deudas</h3><p>Todas las cuotas pendientes, con las vencidas marcadas.</p></div></div>
+    <div class="card modulo" data-a="zoom"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M2 20h20"/></svg></div><div><h3>Estadísticas</h3><p>En qué se va la plata, mes a mes.</p></div></div>
+    <div class="card modulo" data-a="zoom"><div class="ico v"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div><h3>Control parental</h3><p>Qué puede hacer cada menor del grupo.</p></div></div>
+  </div>
+  <div class="cinta" data-a="up"><span class="boton-ayuda">?</span>Sin manual: un recorrido guiado en el primer ingreso, y el botón de ayuda lo repite cuando quieras.</div>
+</section>
+
+<!-- 4. ARQUITECTURA -->
+<section class="slide" data-orador="Matías" aria-label="Arquitectura">
+  <span class="kicker" data-a="up">Cómo está construida</span>
+  <h2 data-a="up">Tres capas, <span class="grad">seguridad en el servidor.</span></h2>
+  <div class="capas">
+    <div class="card capa" data-a="up">
+      <div class="tag">Presentación</div><h3>Vue 3</h3><div class="donde">Netlify</div>
+      <ul><li>Pinia y rutas protegidas</li><li>Chart.js para gráficos</li><li>Motion para animaciones</li></ul>
+    </div>
+    <div class="flujo" data-a="zoom"><div class="linea"></div></div>
+    <div class="card capa" data-a="up">
+      <div class="tag">Lógica</div><h3>Node + Express 5</h3><div class="donde">Servidor Ubuntu + ngrok</div>
+      <ul><li>Servicio del sistema: arranca solo</li><li>API REST por módulos</li><li>Errores HTTP normalizados</li></ul>
+    </div>
+    <div class="flujo" data-a="zoom"><div class="linea"></div></div>
+    <div class="card capa" data-a="up">
+      <div class="tag">Datos</div><h3>PostgreSQL</h3><div class="donde">Neon · TLS verificado</div>
+      <ul><li><span data-count="19">0</span>&nbsp;migraciones reversibles</li><li>Restricciones en la base</li><li>36 índices declarados</li></ul>
+    </div>
+  </div>
+  <div class="claves">
+    <div class="card clave" data-a="left"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5c-.6-.9-1.6-1.4-2.7-1.4-1.6 0-2.8.9-2.8 2.1 0 3.1 5.6 1.7 5.6 4.7 0 1.3-1.2 2.1-2.8 2.1-1.3 0-2.3-.5-3-1.4M12 6.5v1.6M12 16v1.5"/></svg></div><div><div class="grande">Dinero en centavos</div><p>Enteros con <span class="mono">BigInt</span>: nunca hay error de redondeo.</p></div></div>
+    <div class="card clave" data-a="right"><div class="ico v"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><div><div class="grande">Seguridad en el servidor</div><p>Cookies <span class="mono">httpOnly</span>, bcrypt y cada consulta filtrada por usuario.</p></div></div>
+  </div>
+</section>
+
+<!-- 5. MENORES -->
+<section class="slide" data-orador="Matías" aria-label="Control parental">
+  <span class="kicker" data-a="up">Cambio pedido · 1</span>
+  <h2 data-a="up">Menores y <span class="grad">control parental.</span></h2>
+  <div class="dos">
+    <div class="reglas">
+      <div class="card regla" data-a="left"><div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div><div><h3>La edad se calcula, no se guarda</h3><p>Con la fecha de nacimiento, en cada pedido. Al cumplir 18 pasa a adulto solo.</p></div></div>
+      <div class="card regla" data-a="left"><div class="ico v"><svg viewBox="0 0 24 24"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/></svg></div><div><h3>El adulto decide, permiso por permiso</h3><p>Vincula al menor en un grupo familiar. Cada cambio queda en un registro de auditoría.</p></div></div>
+      <div class="card regla" data-a="left"><div class="ico r"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg></div><div><h3>Reglas que no se negocian</h3><p>Sin tutor: solo funciones personales. Tarjetas: nunca. El menor no cambia sus propios permisos.</p></div></div>
+      <div class="fila" data-a="up"><span class="chip">15 pruebas de autorización</span><span class="chip v">11 de control parental</span></div>
+    </div>
+    <div style="position:relative" data-a="right">
+      <div class="card panel-permisos">
+        <div class="pp-cab"><div class="avatar">LU</div><div><b>Lucía</b><small>14 años · Grupo "Casa"</small></div></div>
+        <div class="pp-grupo">Gastos</div>
+        <div class="permiso">Ver gastos simples<span class="switch" data-switch="on"></span></div>
+        <div class="permiso">Crear gastos simples<span class="switch" data-switch="on"></span></div>
+        <div class="permiso">Ver gastos del grupo<span class="switch" data-switch="off"></span></div>
+        <div class="pp-grupo">Estadísticas</div>
+        <div class="permiso">Visualizar estadísticas<span class="switch" data-switch="on"></span></div>
+        <div class="pp-grupo">Tarjetas</div>
+        <div class="permiso"><span>Registrar tarjetas<small>Siempre bloqueado para menores</small></span><span class="switch lock"></span></div>
+        <div class="permiso"><span>Consultar información bancaria<small>Siempre bloqueado para menores</small></span><span class="switch lock"></span></div>
+      </div>
+      <div class="sello-403" data-a="stamp"><small>SI LO FUERZA POR LA API</small>403 Prohibido</div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. TARJETAS Y MULTIMONEDA -->
+<section class="slide" data-orador="Tomás" aria-label="Tarjetas y multimoneda">
+  <span class="kicker" data-a="up">Cambios pedidos · 2 y 3</span>
+  <h2 data-a="up">Tarjetas seguras y <span class="grad">varias monedas.</span></h2>
+  <div class="dos" style="grid-template-columns: 1fr 1fr; gap: 56px">
+    <div>
+      <div class="tarjeta-visual" data-a="flip">
+        <div class="tv-top"><span>Mi banco</span><span>CRÉDITO</span></div>
+        <div class="chip-tarjeta"></div>
+        <div class="tv-num mono"><span class="oculto">•••• •••• ••••</span> 4821</div>
+        <div class="tv-pie"><span><small>Titular</small>Titular de ejemplo</span><span><small>Alias</small>Tarjeta familiar</span></div>
+      </div>
+      <div class="nunca">
+        <div data-a="left"><span class="x">✕</span>Nunca se guarda el <s>número completo</s></div>
+        <div data-a="left"><span class="x">✕</span>Nunca se guarda el <s>código de seguridad</s> ni el <s>PIN</s></div>
+        <div data-a="left"><span class="x" style="background:rgba(45,212,168,.14);color:var(--primario)">✓</span>Últimos 4 dígitos validados en la API y en la base</div>
+      </div>
+    </div>
+    <div>
+      <div class="card" data-a="up" style="padding:30px">
+        <div class="kicker" style="color:var(--acento)">Multimoneda</div>
+        <h3 style="font-size:30px;margin:14px 0 4px">Mi plata, por moneda</h3>
+        <p>Movimientos, presupuestos, metas y gastos fijos en pesos o en dólares.</p>
+        <div class="monedas">
+          <div class="moneda-fila" data-a="right"><span class="badge ars">ARS</span><span>Pesos</span><span class="monto">$ <span data-count="482350" data-format="miles">0</span></span></div>
+          <div class="moneda-fila" data-a="right"><span class="badge usd">USD</span><span>Dólares</span><span class="monto">US$ <span data-count="1250" data-format="miles">0</span></span></div>
+        </div>
+        <p class="sin-conv" data-a="up"><b>Sin conversión:</b> un tipo de cambio inventado daría totales falsos.</p>
+      </div>
+      <div class="fila chips-tarjetas" style="margin-top:22px" data-a="up"><span class="chip r">Tarjetas bloqueadas para menores</span><span class="chip v">Meta y movimiento: misma moneda</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. VELOCIDAD -->
+<section class="slide" data-orador="Tomás" aria-label="Velocidad y optimización">
+  <span class="kicker" data-a="up">Cambio pedido · 4</span>
+  <h2 data-a="up">Más rápida, <span class="grad">sin cambiar resultados.</span></h2>
+  <div class="comparativas">
+    <div class="card comp" data-a="up">
+      <h3>Estadísticas históricas (24 meses)</h3>
+      <p class="desc">Antes: dos consultas por mes. Ahora: todo el rango de una vez.</p>
+      <div class="barra-comp"><span>Antes</span><div class="pista"><i class="antes" data-bar="100"></i></div><span class="valor" data-count="48">0</span></div>
+      <div class="barra-comp"><span>Ahora</span><div class="pista"><i class="ahora" data-bar="4.2"></i></div><span class="valor ok" data-count="2">0</span></div>
+      <div class="factor"><b class="grad" data-count="24" data-suffix="×">0</b> menos consultas a la base</div>
+    </div>
+    <div class="card comp" data-a="up">
+      <h3>Presupuestos (10 por mes)</h3>
+      <p class="desc">Antes: "N+1", dos consultas por presupuesto. Ahora: dos en total.</p>
+      <div class="barra-comp"><span>Antes</span><div class="pista"><i class="antes" data-bar="100"></i></div><span class="valor" data-count="20">0</span></div>
+      <div class="barra-comp"><span>Ahora</span><div class="pista"><i class="ahora" data-bar="10"></i></div><span class="valor ok" data-count="2">0</span></div>
+      <div class="factor"><b class="grad" data-count="10" data-suffix="×">0</b> menos consultas a la base</div>
+    </div>
+  </div>
+  <div class="extras">
+    <div class="card" data-a="zoom"><div class="ico"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3>Sin cambiar resultados</h3><p>Una prueba compara la serie optimizada con la original, mes a mes.</p></div>
+    <div class="card" data-a="zoom"><div class="ico v"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div><h3>Paginación</h3><p>Movimientos y gastos compartidos llegan de a 20.</p></div>
+    <div class="card" data-a="zoom"><div class="ico a"><svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><h3>36 índices</h3><p>En las consultas que más se usan.</p></div>
+    <div class="card" data-a="zoom"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><h3>&lt; 200 ms</h3><p>Por consulta, medido con la base real. Esqueletos mientras carga.</p></div>
+  </div>
+</section>
+
+<!-- 8. DEMO -->
+<section class="slide" data-orador="Matías y Tomás" aria-label="Demo en vivo">
+  <div class="demo-cab" data-a="up"><span class="kicker">Demo</span><span class="en-vivo"><i></i>En vivo</span></div>
+  <h2 data-a="up">Veámosla <span class="grad">funcionando.</span></h2>
+  <div class="recorridos">
+    <div class="card recorrido" data-a="left">
+      <div class="quien"><div class="avatar">MB</div><div><b>Uso personal</b><small>Matías</small></div></div>
+      <div class="paso"><span class="n">1</span><div>Cargar $ 30.000 y doble clic en Guardar<small>Formato al escribir; se guarda una sola vez</small></div></div>
+      <div class="paso"><span class="n">2</span><div>Presupuesto al 80 %<small>Barra amarilla y aviso en la campana</small></div></div>
+      <div class="paso"><span class="n">3</span><div>Gasto fijo con tarjeta → Pagar<small>Solo últimos 4 dígitos; se anota solo</small></div></div>
+    </div>
+    <div class="card recorrido t" data-a="right">
+      <div class="quien"><div class="avatar t">TG</div><div><b>Uso familiar</b><small>Tomás</small></div></div>
+      <div class="paso"><span class="n">1</span><div>$ 100 entre 3 y saldos<small>33,34 + 33,33 + 33,33: ni un centavo perdido</small></div></div>
+      <div class="paso"><span class="n">2</span><div>Control parental<small>Permisos registrados y tarjetas bloqueadas</small></div></div>
+      <div class="paso"><span class="n">3</span><div>Del lado del menor<small>El servidor rechaza lo no habilitado</small></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. V&V -->
+<section class="slide" data-orador="Matías y Tomás" aria-label="Verificación y validación">
+  <span class="kicker" data-a="up">Verificación y validación</span>
+  <h2 data-a="up">La confianza <span class="grad">se prueba.</span></h2>
+  <div class="metricas">
+    <div class="card metrica" data-a="up"><div class="num grad" data-count="349">0</div><div class="et">Pruebas automatizadas</div><div class="det">250 backend (Jest + Supertest, base real) · 99 frontend (Vitest) · todas aprobadas</div></div>
+    <div class="card metrica" data-a="up"><div class="num" data-count="23">0</div><div class="et">Casos formales</div><div class="det">Clases de equivalencia y valores límite</div></div>
+    <div class="card metrica" data-a="up"><div class="num" data-count="16">0</div><div class="et">Defectos cerrados</div><div class="det">De 16 registrados, con prueba de regresión</div></div>
+    <div class="card metrica" data-a="up"><div class="num" data-count="100" data-suffix="%">0</div><div class="et">Ramas cubiertas</div><div class="det">Caja blanca de <span class="mono">validarMonto</span></div></div>
+  </div>
+  <div class="ciclo">
+    <div class="card fase rojo" data-a="left"><div class="bola">1</div><div><h3>Rojo</h3><p>Prueba que espera 400 ante 11 dígitos. Falla con 500 (D-01).</p></div></div>
+    <div class="card fase verde" data-a="left"><div class="bola">2</div><div><h3>Verde</h3><p>Se agrega el tope máximo en <span class="mono">dinero.js</span>. Pasa.</p></div></div>
+    <div class="card fase azul" data-a="left"><div class="bola">3</div><div><h3>Refactor</h3><p>Mensaje centralizado y suite completa sin regresiones.</p></div></div>
+  </div>
+</section>
+
+<!-- 10. CONCLUSIÓN -->
+<section class="slide conclusion" data-orador="Matías" aria-label="Conclusión">
+  <span class="kicker" data-a="up">¿Satisface las necesidades planteadas?</span>
+  <h1 class="veredicto" data-a="up">Sí, <span class="grad">en lo principal.</span></h1>
+  <div class="checks">
+    <div class="check" data-a="left"><i>✓</i>Plata registrada al centavo</div>
+    <div class="check" data-a="left"><i>✓</i>Presupuestos que avisan a tiempo</div>
+    <div class="check" data-a="left"><i>✓</i>Gastos fijos y cuotas planificados</div>
+    <div class="check" data-a="left"><i>✓</i>Gastos en familia sin desbalances</div>
+    <div class="check" data-a="left"><i>✓</i>Menores con permisos que controla un adulto</div>
+    <div class="check" data-a="left"><i>✓</i>Más rápida, sin cambiar resultados</div>
+  </div>
+  <div class="cita" data-a="up">"La confianza en un sistema que maneja plata no se declara: <span class="grad">se prueba.</span>"</div>
+  <div class="gracias" data-a="pop"><b>¡Gracias!</b><span>¿Preguntas?</span></div>
+</section>
+
+</div>
+</main>
+
+<footer class="pie">
+  <div class="marca">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#0b7d63"/><circle cx="32" cy="32" r="23" fill="#fff"/><path d="M39.5 24.5c-1.7-2.1-4.3-3.2-7.4-3.2-4.6 0-7.8 2.4-7.8 5.9 0 8.8 15.8 4.8 15.8 13.2 0 3.8-3.4 6-8 6-3.6 0-6.4-1.4-8.3-4" fill="none" stroke="#0b7d63" stroke-width="6" stroke-linecap="round"/><path d="M32 16.5v5M32 42.5v5" stroke="#0b7d63" stroke-width="6" stroke-linecap="round"/></svg>
+    Platita
+  </div>
+  <div class="puntos" id="puntos"></div>
+  <div class="orador" id="orador"></div>
+</footer>
+
+<script>
+(() => {
+  const escenario = document.getElementById('escenario')
+  const slides = [...document.querySelectorAll('.slide')]
+  const puntos = document.getElementById('puntos')
+  const barra = document.getElementById('barra')
+  const orador = document.getElementById('orador')
+  const destello = document.getElementById('destello')
+  const SUAVE = 'cubic-bezier(.22,1,.36,1)'
+  const REBOTE = 'cubic-bezier(.34,1.56,.64,1)'
+  let actual = -1
+  let bloqueado = false
+
+  // Escala el escenario de 1600x900 para que entre completo en la ventana.
+  function escalar() {
+    const s = Math.min(innerWidth / 1600, innerHeight / 900)
+    escenario.style.transform = `translate(-50%, -50%) scale(${s})`
+  }
+  addEventListener('resize', escalar)
+  escalar()
+
+  slides.forEach((_, i) => {
+    const b = document.createElement('button')
+    b.setAttribute('aria-label', `Ir a la diapositiva ${i + 1}`)
+    b.addEventListener('click', () => ir(i))
+    puntos.appendChild(b)
+  })
+
+  // Entradas de cada elemento marcado con data-a, en cascada.
+  const ENTRADAS = {
+    up: [{ opacity: 0, transform: 'translateY(46px)', filter: 'blur(6px)' }, { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' }],
+    left: [{ opacity: 0, transform: 'translateX(-60px)', filter: 'blur(6px)' }, { opacity: 1, transform: 'translateX(0)', filter: 'blur(0)' }],
+    right: [{ opacity: 0, transform: 'translateX(70px)', filter: 'blur(6px)' }, { opacity: 1, transform: 'translateX(0)', filter: 'blur(0)' }],
+    zoom: [{ opacity: 0, transform: 'scale(.82)' }, { opacity: 1, transform: 'scale(1)' }],
+    pop: [{ opacity: 0, transform: 'scale(.3) rotate(-18deg)' }, { opacity: 1, transform: 'scale(1) rotate(0)' }],
+    flip: [{ opacity: 0, transform: 'perspective(1200px) rotateY(-75deg) translateX(-40px)' }, { opacity: 1, transform: 'perspective(1200px) rotateY(0) translateX(0)' }],
+    stamp: [{ opacity: 0, transform: 'scale(2.6) rotate(-20deg)' }, { opacity: 1, transform: 'scale(1) rotate(-6deg)' }],
+  }
+
+  function formatear(n, formato) {
+    if (formato === 'pesos') return '$ ' + Math.round(n).toLocaleString('es-AR')
+    if (formato === 'miles') return Math.round(n).toLocaleString('es-AR')
+    return String(Math.round(n))
+  }
+
+  // Las cifras suben desde 0 hasta su valor.
+  function contar(el, retraso) {
+    const fin = Number(el.dataset.count)
+    const sufijo = el.dataset.suffix || ''
+    const formato = el.dataset.format
+    const token = (el._token = (el._token || 0) + 1)
+    el.textContent = formatear(0, formato) + sufijo
+    const inicio = performance.now() + retraso
+    const dur = 1400
+    function paso(t) {
+      if (el._token !== token) return
+      const p = Math.min(1, Math.max(0, (t - inicio) / dur))
+      const e = 1 - Math.pow(1 - p, 4)
+      el.textContent = formatear(fin * e, formato) + sufijo
+      if (p < 1) requestAnimationFrame(paso)
+    }
+    requestAnimationFrame(paso)
+  }
+
+  function animarContenido(slide) {
+    const items = [...slide.querySelectorAll('[data-a]')]
+    items.forEach((el, i) => {
+      el.getAnimations().forEach((a) => a.cancel())
+      const tipo = el.dataset.a
+      const rebote = tipo === 'pop' || tipo === 'stamp' || tipo === 'zoom'
+      el.animate(ENTRADAS[tipo] || ENTRADAS.up, {
+        duration: tipo === 'stamp' ? 600 : 850,
+        delay: 260 + i * 70 + (tipo === 'stamp' ? 900 : 0),
+        easing: rebote ? REBOTE : SUAVE,
+        fill: 'both',
+      })
+    })
+    slide.querySelectorAll('[data-count]').forEach((el) => contar(el, 650))
+    slide.querySelectorAll('[data-bar]').forEach((el, i) => {
+      el.getAnimations().forEach((a) => a.cancel())
+      el.animate([{ width: '0%' }, { width: el.dataset.bar + '%' }], { duration: 1300, delay: 700 + i * 160, easing: SUAVE, fill: 'both' })
+    })
+    // Interruptores del control parental: se encienden uno tras otro.
+    slide.querySelectorAll('[data-switch]').forEach((el, i) => {
+      el.classList.remove('on')
+      if (el.dataset.switch === 'on') setTimeout(() => el.classList.add('on'), 1000 + i * 260)
+    })
+  }
+
+  function ir(i, direccion) {
+    if (i < 0 || i >= slides.length || i === actual || bloqueado) return
+    const dir = direccion ?? (i > actual ? 1 : -1)
+    const saliente = slides[actual]
+    const entrante = slides[i]
+    bloqueado = true
+    setTimeout(() => { bloqueado = false }, 450)
+
+    // La diapositiva que sale se aleja, se achica y se desenfoca.
+    if (saliente) {
+      saliente.getAnimations().forEach((a) => a.cancel())
+      const anim = saliente.animate([
+        { opacity: 1, transform: 'translateX(0) scale(1)', filter: 'blur(0)' },
+        { opacity: 0, transform: `translateX(${-120 * dir}px) scale(.94)`, filter: 'blur(10px)' },
+      ], { duration: 520, easing: 'cubic-bezier(.55,0,.75,.2)', fill: 'forwards' })
+      anim.onfinish = () => { if (slides[actual] !== saliente) { saliente.classList.remove('activa'); anim.cancel() } }
+    }
+
+    // La que entra se abre con una máscara circular desde el borde.
+    entrante.classList.add('activa')
+    entrante.getAnimations().forEach((a) => a.cancel())
+    // Al abrir la página no hay máscara: la primera diapositiva aparece con sus elementos en cascada.
+    if (saliente) {
+      const x = dir > 0 ? '100%' : '0%'
+      const mascara = entrante.animate([
+        { clipPath: `circle(0% at ${x} 50%)` },
+        { clipPath: `circle(150% at ${x} 50%)` },
+      ], { duration: 950, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'backwards' })
+      mascara.onfinish = () => mascara.cancel()
+    }
+
+    destello.style.left = dir > 0 ? 'calc(100% - 20px)' : '-20px'
+    destello.style.top = 'calc(50% - 20px)'
+    destello.getAnimations().forEach((a) => a.cancel())
+    destello.animate([
+      { opacity: .9, transform: 'scale(1)' },
+      { opacity: 0, transform: 'scale(70)' },
+    ], { duration: 1000, easing: SUAVE })
+
+    animarContenido(entrante)
+    actual = i
+    ;[...puntos.children].forEach((b, j) => b.classList.toggle('on', j === i))
+    barra.style.width = ((i + 1) / slides.length) * 100 + '%'
+    const quien = entrante.dataset.orador || ''
+    const esTomas = quien.startsWith('Tomás')
+    const iniciales = esTomas ? 'TG' : quien.includes(' y ') ? 'M+T' : 'MB'
+    orador.innerHTML = `<span class="avatar ${esTomas ? 't' : ''}">${iniciales}</span>Habla: <b>${quien}</b> · ${i + 1}/${slides.length}`
+    history.replaceState(null, '', '#' + (i + 1))
+  }
+
+  const siguiente = () => ir(actual + 1, 1)
+  const anterior = () => ir(actual - 1, -1)
+
+  addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); siguiente() }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); anterior() }
+    else if (e.key === 'Home') ir(0, -1)
+    else if (e.key === 'End') ir(slides.length - 1, 1)
+    else if (e.key === 'f' || e.key === 'F') {
+      if (document.fullscreenElement) document.exitFullscreen()
+      else document.documentElement.requestFullscreen?.()
+    }
+  })
+  addEventListener('click', (e) => {
+    if (e.target.closest('.puntos')) return
+    if (e.clientX > innerWidth * 0.35) siguiente(); else anterior()
+  })
+  let toqueX = null
+  addEventListener('touchstart', (e) => { toqueX = e.touches[0].clientX }, { passive: true })
+  addEventListener('touchend', (e) => {
+    if (toqueX === null) return
+    const dx = e.changedTouches[0].clientX - toqueX
+    if (Math.abs(dx) > 50) (dx < 0 ? siguiente : anterior)()
+    toqueX = null
+  })
+
+  const inicial = Math.min(slides.length, Math.max(1, parseInt(location.hash.slice(1), 10) || 1)) - 1
+  ir(inicial, 1)
+})()
+</script>
+</body>
+</html>

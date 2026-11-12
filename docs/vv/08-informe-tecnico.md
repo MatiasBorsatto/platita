@@ -357,12 +357,12 @@ cd frontend && npm test
 | Suite | Motor | Archivos de Prueba | Casos Ejecutados | Tasa de Éxito |
 |---|---|---|---|---|
 | **Backend API & Lógica** | Jest + Supertest | 34 archivos | 250 pruebas | **100 % (250/250 aprobadas)** |
-| **Frontend UI & Tiendas** | Vitest + Vue Test Utils | 28 archivos | 98 pruebas | **100 % (98/98 aprobadas)** |
-| **Total Global Automatizado** | — | **62 archivos** | **348 pruebas** | **100 % Aprobación** |
+| **Frontend UI & Tiendas** | Vitest + Vue Test Utils | 28 archivos | 99 pruebas | **100 % (99/99 aprobadas)** |
+| **Total Global Automatizado** | — | **62 archivos** | **349 pruebas** | **100 % Aprobación** |
 
 ### 17.3 Ventajas y Limitaciones Observadas
 * **Ventajas:**
-  * Velocidad de ejecución: las 348 pruebas se completan en menos de 15 segundos en total.
+  * Velocidad de ejecución: las 349 pruebas se completan en menos de 15 segundos en total.
   * Detección temprana de regresiones ante cambios en esquemas de base de datos o lógica de negocio.
   * Las pruebas de API verifican restricciones reales de base de datos (claves foráneas, índices de unicidad y triggers), no simulaciones en memoria.
 * **Limitaciones:**
@@ -487,8 +487,8 @@ A continuación se sintetiza el balance cuantitativo de las actividades de V&V d
   • Casos de prueba formales diseñados:             23 casos
   • Casos de prueba ejecutados manualmente:         17 casos (100 % completados)
   • Pruebas automatizadas de Backend (Jest):        250 pruebas (100 % exitosas)
-  • Pruebas automatizadas de Frontend (Vitest):     98 pruebas (100 % exitosas)
-  • Total de pruebas automatizadas en suite:        348 pruebas aprobadas
+  • Pruebas automatizadas de Frontend (Vitest):     99 pruebas (100 % exitosas)
+  • Total de pruebas automatizadas en suite:        349 pruebas aprobadas
   • Pruebas de sistema sobre entorno integrado:     16 pruebas evaluadas
   • Defectos identificados y registrados:           16 defectos
   • Tasa de resolución y cierre de defectos:        100 % (16 / 16 cerrados)
@@ -506,7 +506,7 @@ El proyecto **Platita** ha demostrado satisfacer plenamente los objetivos funcio
 ### 24.1 Respuesta a la Pregunta Fundamental de Validación
 > **¿El sistema satisface las necesidades planteadas al comienzo del proyecto?**
 > 
-> **Sí, de forma concluyente.** La aplicación permite a los usuarios registrar sus operaciones de ingresos y gastos con certeza matemática de centavos, proyectar compromisos periódicos mediante gastos fijos, mantener control de presupuestos mediante alarmas oportunas y administrar economías familiares compartidas sin desbalances ni ambigüedades. Las pruebas automatizadas (348 pruebas) y las validaciones de sistema en navegadores móviles y de escritorio constituyen la evidencia fehaciente de su solidez operativa.
+> **Sí, de forma concluyente.** La aplicación permite a los usuarios registrar sus operaciones de ingresos y gastos con certeza matemática de centavos, proyectar compromisos periódicos mediante gastos fijos, mantener control de presupuestos mediante alarmas oportunas y administrar economías familiares compartidas sin desbalances ni ambigüedades. Las pruebas automatizadas (349 pruebas) y las validaciones de sistema en navegadores móviles y de escritorio constituyen la evidencia fehaciente de su solidez operativa.
 
 ### 24.2 Principales Aprendizajes del Proceso de V&V
 1. **La exactitud numérica no se negocia:** El tratamiento de dinero en aplicaciones web debe realizarse invariablemente mediante aritmética de enteros (centavos) en la capa de negocio, protegiendo las bases de datos con validaciones rigurosas en los valores límite superiores e inferiores.

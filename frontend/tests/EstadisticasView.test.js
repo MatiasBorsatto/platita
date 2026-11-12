@@ -44,4 +44,23 @@ describe('EstadisticasView por moneda', () => {
     expect(valorDe(w, 'data-gastos')).toMatchObject({ valor: '120.00', moneda: 'USD' })
     expect(valorDe(w, 'data-ingresos')).toMatchObject({ valor: '0.00', moneda: 'USD' })
   })
+
+  // La API real devuelve los aportes a metas en el primer nivel (pesos), no dentro de porMoneda.
+  it('los aportes a metas nunca quedan sin valor (antes se veía NaN)', async () => {
+    api.resumenMensual.mockResolvedValue({
+      aportesMetas: '250.00',
+      porMoneda: [
+        { moneda: 'ARS', ingresos: '1000.00', gastos: '300.00', ahorroNeto: '700.00', gastosPorCategoria: [], presupuestos: [] },
+        { moneda: 'USD', ingresos: '50.00', gastos: '0.00', ahorroNeto: '50.00', gastosPorCategoria: [], presupuestos: [] }
+      ]
+    })
+    const w = mount(EstadisticasView)
+    await flushPromises()
+    expect(valorDe(w, 'data-aportes')).toMatchObject({ valor: '250.00', moneda: 'ARS' })
+    expect(w.find('[data-aportes]').text()).not.toContain('NaN')
+
+    await w.find('select[name="moneda"]').setValue('USD')
+    await flushPromises()
+    expect(valorDe(w, 'data-aportes')).toMatchObject({ valor: '0.00', moneda: 'USD' })
+  })
 })
